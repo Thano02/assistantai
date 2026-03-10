@@ -62,7 +62,7 @@ class Business(Base):
     email_verification_token = Column(String(100), nullable=True)
 
     # Paiement (géré manuellement par le superadmin)
-    subscription_paid = Column(Boolean, default=False)
+    subscription_paid = Column(Boolean, default=True)
 
     # Profession & configuration
     profession_type = Column(String(30), default="salon")
