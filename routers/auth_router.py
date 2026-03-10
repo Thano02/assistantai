@@ -176,7 +176,8 @@ def login_submit(
         update_business(db, business.id, last_login_at=datetime.utcnow())
 
         jwt_token = create_access_token(business.id, email)
-        response = RedirectResponse(url="/dashboard", status_code=303)
+        redirect_url = "/superadmin/dashboard" if business.is_superadmin else "/dashboard"
+        response = RedirectResponse(url=redirect_url, status_code=303)
         response.set_cookie(
             "access_token", jwt_token,
             httponly=True, max_age=60 * 60 * 24 * 30, samesite="lax",

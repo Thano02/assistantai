@@ -23,7 +23,19 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
+def _check_subscription(business):
+    """Redirect clients with unpaid subscription to /suspended."""
+    if business and not business.is_superadmin and not business.subscription_paid:
+        return RedirectResponse(url="/suspended", status_code=303)
+    return None
+
+
 # ── Landing page ──────────────────────────────────────────────────────────────
+
+@router.get("/suspended")
+def suspended_page(request: Request):
+    return templates.TemplateResponse("suspended.html", {"request": request})
+
 
 @router.get("/")
 def landing(request: Request):
@@ -53,6 +65,15 @@ def dashboard(
         business = get_business_by_id(db, business_id)
         if not business:
             return RedirectResponse(url="/login")
+
+        # Superadmin → redirect to superadmin dashboard
+        if business.is_superadmin:
+            return RedirectResponse(url="/superadmin/dashboard", status_code=302)
+
+        # Unpaid subscription → suspended page
+        gate = _check_subscription(business)
+        if gate:
+            return gate
 
         tz = pytz.timezone(settings.timezone)
         today = datetime.now(tz).date()
@@ -158,6 +179,9 @@ def calendar_view(
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
+        gate = _check_subscription(business)
+        if gate:
+            return gate
         from config import load_business_config
         business_cfg = load_business_config()
         return templates.TemplateResponse("calendar_view.html", {
@@ -213,6 +237,9 @@ def client_settings_page(
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
+        gate = _check_subscription(business)
+        if gate:
+            return gate
         return templates.TemplateResponse("dashboard/client_settings.html", {
             "request": request,
             "business": business,
@@ -292,6 +319,9 @@ def faq_page(
         business = get_business_by_id(db, business_id)
         if not business:
             return RedirectResponse(url="/auth/login")
+        gate = _check_subscription(business)
+        if gate:
+            return gate
         from database import get_faqs
         faqs = get_faqs(db, business_id)
         return templates.TemplateResponse("dashboard/faq.html", {
@@ -402,6 +432,9 @@ def billing_page(
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
+        gate = _check_subscription(business)
+        if gate:
+            return gate
         tz = pytz.timezone(settings.timezone)
         now = datetime.now(tz)
 
