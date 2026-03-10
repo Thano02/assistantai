@@ -188,6 +188,18 @@ class Reservation(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ContactRequest(Base):
+    __tablename__ = "contact_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(200), nullable=False)
+    phone = Column(String(30), nullable=True)
+    project_description = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

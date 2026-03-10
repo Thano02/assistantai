@@ -1,0 +1,286 @@
+{% extends "base_public.html" %}
+{% block title %}Fonctionnalités — AssistantAI{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up { opacity:0; animation: fadeUp 0.55s ease forwards; }
+  .fa-1{animation-delay:.05s} .fa-2{animation-delay:.15s} .fa-3{animation-delay:.25s} .fa-4{animation-delay:.35s}
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .use-card:hover { transform: translateY(-3px); transition: all .2s ease; }
+  .sector-card:hover .sector-icon { transform: scale(1.1); transition: all .2s; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="bg-gray-950 py-24 border-b border-gray-800">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-blue-950 border border-blue-800 text-blue-300 px-4 py-1.5 rounded-full text-sm font-medium mb-8 fade-up fa-1">
+      <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
+      AssistantAI — Ce que nous faisons
+    </div>
+    <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6 fade-up fa-2">
+      Un robot IA vocal<br>pour <span class="gradient-text">chaque métier</span>
+    </h1>
+    <p class="text-xl text-gray-400 leading-relaxed fade-up fa-3">
+      Prise de rendez-vous, vérification d'éligibilité, réponse automatique —<br>
+      AssistantAI s'adapte à votre activité et parle à vos clients à votre place.
+    </p>
+  </div>
+</section>
+
+<!-- Secteurs servis -->
+<section class="bg-gray-950 py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl font-bold text-white mb-3">À qui s'adresse AssistantAI ?</h2>
+      <p class="text-gray-400">Découvrez les secteurs que nous accompagnons.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      {% set sectors = [
+        ("💇", "Salon de coiffure & esthétique",
+          "Gérez vos créneaux de coupe, coloration, manucure… Le robot prend les RDV 24h/24, rappelle vos clients 24h avant et gère les annulations sans vous déranger.",
+          ["Prise de RDV automatique", "Rappels SMS clients", "Gestion des annulations"]),
+        ("🍽️", "Restauration & hôtellerie",
+          "Réservez des tables, prenez des commandes de groupe, confirmez des privatisations. Votre salle ne sera jamais surbookée.",
+          ["Réservations de table", "Confirmation de groupe", "Rappels de passage"]),
+        ("🏥", "Cabinet médical & paramédical",
+          "Kinésithérapeutes, dentistes, psychologues — automatisez la prise de RDV, respectez les délais légaux et déchargez votre secrétariat.",
+          ["Agenda multi-praticiens", "Créneaux d'urgence", "SMS de rappel"]),
+        ("✅", "Vérification d'éligibilité",
+          "Posez les bonnes questions au bon moment. Le robot guide vos prospects à travers un script et vérifie leur éligibilité à un programme ou une offre.",
+          ["Script personnalisable", "Collecte de données", "Redirection qualifiée"]),
+        ("📞", "Répondeur intelligent",
+          "Même sans prise de RDV : le robot répond, informe sur vos horaires, votre adresse, vos tarifs et prend un message si besoin.",
+          ["FAQ automatique", "Horaires & infos", "Message vocal transmis"]),
+        ("🔧", "Projet sur mesure",
+          "Votre activité ne rentre dans aucune case ? Nous développons des assistants vocaux entièrement personnalisés selon vos besoins métier.",
+          ["Script sur mesure", "Intégration CRM", "Accompagnement dédié"]),
+      ] %}
+
+      {% for emoji, title, desc, tags in sectors %}
+      <div class="sector-card bg-gray-900 border border-gray-800 rounded-2xl p-7 hover:border-blue-800/60 transition-all">
+        <div class="sector-icon text-4xl mb-4">{{ emoji }}</div>
+        <h3 class="text-lg font-bold text-white mb-3">{{ title }}</h3>
+        <p class="text-sm text-gray-400 leading-relaxed mb-4">{{ desc }}</p>
+        <div class="flex flex-wrap gap-2">
+          {% for tag in tags %}
+          <span class="text-xs bg-gray-800 text-gray-400 border border-gray-700 px-2.5 py-1 rounded-full">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+
+<!-- Cas d'usage détaillés -->
+<section class="bg-gray-900 border-y border-gray-800 py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl font-bold text-white mb-3">Comment ça fonctionne concrètement ?</h2>
+      <p class="text-gray-400">4 scénarios réels d'utilisation.</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8">
+
+      <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <span class="text-white font-bold">Prise de RDV automatique</span>
+        </div>
+        <div class="space-y-3">
+          {% for step in ["Le client appelle votre numéro", "Le robot l'accueille par son prénom (client connu)", "Il demande le service souhaité et propose des créneaux disponibles", "Il confirme le RDV et envoie un SMS récapitulatif", "Rappel automatique 24h avant"] %}
+          <div class="flex items-start gap-3 text-sm text-gray-400">
+            <span class="w-5 h-5 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            {{ step }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <span class="text-white font-bold">Vérification d'éligibilité</span>
+        </div>
+        <div class="space-y-3">
+          {% for step in ["Le prospect appelle suite à une pub ou flyer", "Le robot pose les questions de qualification (âge, situation, zone géo…)", "Il calcule l'éligibilité en temps réel selon vos critères", "Si éligible → propose un RDV avec un conseiller", "Si non éligible → oriente vers une autre solution"] %}
+          <div class="flex items-start gap-3 text-sm text-gray-400">
+            <span class="w-5 h-5 bg-violet-600/20 text-violet-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            {{ step }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-green-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+          </div>
+          <span class="text-white font-bold">Répondeur intelligent</span>
+        </div>
+        <div class="space-y-3">
+          {% for step in ["Appel entrant quand vous êtes indisponible", "Le robot répond immédiatement (jamais de sonnerie sans fin)", "Il informe sur les horaires, l'adresse, les tarifs", "Il répond aux questions fréquentes via votre FAQ", "Il prend un message si besoin et vous le transmet par email"] %}
+          <div class="flex items-start gap-3 text-sm text-gray-400">
+            <span class="w-5 h-5 bg-green-600/20 text-green-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            {{ step }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <span class="text-white font-bold">Multi-employés & planning</span>
+        </div>
+        <div class="space-y-3">
+          {% for step in ["Le client choisit son employé préféré (ou le premier dispo)", "Le robot consulte les agendas individuels en temps réel", "Il propose les créneaux disponibles par employé", "Confirmation envoyée au client + au collaborateur", "Modifications et annulations gérées automatiquement"] %}
+          <div class="flex items-start gap-3 text-sm text-gray-400">
+            <span class="w-5 h-5 bg-orange-600/20 text-orange-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            {{ step }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Technologie -->
+<section class="bg-gray-950 py-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold text-white mb-3">Propulsé par les meilleures technologies IA</h2>
+      <p class="text-gray-400">Nous assemblons le meilleur du marché pour vous.</p>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {% for name, role, color in [
+        ("OpenAI GPT-4o", "Intelligence conversationnelle", "blue"),
+        ("ElevenLabs", "Voix ultra-réaliste en français", "violet"),
+        ("Twilio", "Infrastructure téléphonique", "red"),
+        ("Google / Outlook", "Synchronisation agenda", "green"),
+      ] %}
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
+        <div class="w-12 h-12 bg-{{ color }}-600/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+          <span class="text-{{ color }}-400 font-black text-lg">{{ name[0] }}</span>
+        </div>
+        <p class="text-white font-semibold text-sm mb-1">{{ name }}</p>
+        <p class="text-gray-500 text-xs">{{ role }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Formulaire de contact / projet -->
+<section class="bg-gray-900 border-t border-gray-800 py-24" id="contact">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+
+    <div class="text-center mb-10">
+      <h2 class="text-3xl font-bold text-white mb-3">Vous avez un projet particulier ?</h2>
+      <p class="text-gray-400 leading-relaxed">
+        Notre solution standard ne couvre pas votre besoin, ou vous souhaitez un assistant 100% sur mesure ?<br>
+        Prenez rendez-vous avec notre équipe — nous étudions chaque projet sérieusement.
+      </p>
+    </div>
+
+    {% if contact_success %}
+    <div class="bg-green-900/40 border border-green-700 text-green-300 rounded-xl px-5 py-4 mb-8 text-sm flex items-center gap-3">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Votre demande a bien été envoyée. Nous vous recontactons sous 24h ouvrées.
+    </div>
+    {% endif %}
+
+    <form method="post" action="/features/contact" class="bg-gray-950 border border-gray-800 rounded-2xl p-8 space-y-5">
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Prénom <span class="text-red-400">*</span></label>
+          <input type="text" name="first_name" required placeholder="Jean"
+            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Nom <span class="text-red-400">*</span></label>
+          <input type="text" name="last_name" required placeholder="Dupont"
+            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition">
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Email <span class="text-red-400">*</span></label>
+          <input type="email" name="email" required placeholder="jean@exemple.fr"
+            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Téléphone</label>
+          <input type="tel" name="phone" placeholder="+33 6 00 00 00 00"
+            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Description de votre projet <span class="text-red-400">*</span></label>
+        <textarea name="project_description" required rows="5"
+          placeholder="Décrivez votre activité, ce que vous souhaitez automatiser, le volume d'appels estimé, vos contraintes particulières…"
+          class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600
+                 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition resize-none"></textarea>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20">
+        Envoyer ma demande →
+      </button>
+      <p class="text-xs text-gray-600 text-center">Réponse garantie sous 24h ouvrées · Aucun engagement</p>
+    </form>
+
+  </div>
+</section>
+
+<!-- CTA bas -->
+<section class="bg-gradient-to-r from-blue-700 to-violet-700 py-16">
+  <div class="max-w-3xl mx-auto px-4 text-center">
+    <h2 class="text-3xl font-black text-white mb-4">Prêt à démarrer ?</h2>
+    <p class="text-blue-100 mb-8">Créez votre compte en 2 minutes et testez gratuitement.</p>
+    <a href="/auth/register"
+       class="inline-block bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-black text-lg transition-all shadow-xl">
+      Commencer gratuitement →
+    </a>
+  </div>
+</section>
+
+{% endblock %}

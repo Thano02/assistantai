@@ -2,7 +2,7 @@
 Routes HTML — pages web du dashboard SaaS.
 """
 from datetime import datetime
-from fastapi import APIRouter, Request, Depends, Query
+from fastapi import APIRouter, Request, Depends, Query, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import pytz
@@ -13,6 +13,7 @@ from database import (
     Reservation,
     Client,
     ReservationStatus,
+    ContactRequest,
     get_business_by_id,
     get_monthly_usage,
 )
@@ -43,6 +44,39 @@ def landing(request: Request):
     if business_id:
         return RedirectResponse(url="/dashboard")
     return templates.TemplateResponse("landing.html", {"request": request})
+
+
+@router.get("/features")
+def features_page(request: Request, contact_success: str = Query(None)):
+    return templates.TemplateResponse("features.html", {
+        "request": request,
+        "contact_success": contact_success == "1",
+    })
+
+
+@router.post("/features/contact")
+def features_contact(
+    request: Request,
+    first_name: str = Form(None),
+    last_name: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    project_description: str = Form(None),
+):
+    db = SessionLocal()
+    try:
+        if first_name and last_name and email and project_description:
+            db.add(ContactRequest(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone or "",
+                project_description=project_description,
+            ))
+            db.commit()
+    finally:
+        db.close()
+    return RedirectResponse(url="/features?contact_success=1#contact", status_code=303)
 
 
 @router.get("/pricing")
