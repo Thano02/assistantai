@@ -16,6 +16,9 @@ from database import (
     Reservation,
     ReservationStatus,
     get_upcoming_reservations,
+    get_business_by_email,
+    create_business,
+    update_business,
 )
 from config import settings, load_business_config
 
@@ -184,5 +187,27 @@ def get_stats():
             "cancelled": cancelled,
             "today_reservations": today_count,
         }
+    finally:
+        db.close()
+
+
+@router.get("/setup-superadmin", dependencies=[Depends(verify_admin)])
+def setup_superadmin(email: str, password: str, name: str = "SuperAdmin"):
+    """Crée ou promeut un compte superadmin. Appeler une seule fois."""
+    from services.auth_service import hash_password
+    db = SessionLocal()
+    try:
+        existing = get_business_by_email(db, email)
+        if existing:
+            update_business(db, existing.id,
+                            is_superadmin=True,
+                            email_verified=True,
+                            subscription_paid=True)
+            return {"status": "ok", "message": f"{email} promu superadmin"}
+        business = create_business(db, name=name, owner_email=email,
+                                   password_hash=hash_password(password), plan="enterprise")
+        update_business(db, business.id, is_superadmin=True,
+                        email_verified=True, subscription_paid=True)
+        return {"status": "ok", "message": f"Superadmin créé : {email}"}
     finally:
         db.close()
