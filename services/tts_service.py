@@ -1,0 +1,56 @@
+"""
+ElevenLabs Text-to-Speech service.
+Génère un fichier audio MP3 et retourne l'URL publique pour Twilio.
+"""
+import os
+import uuid
+import httpx
+from config import settings
+
+
+def text_to_speech(text: str) -> str:
+    """
+    Convertit le texte en audio via ElevenLabs.
+    Retourne l'URL publique du fichier audio.
+    """
+    filename = f"{uuid.uuid4().hex}.mp3"
+    filepath = os.path.join("static", "audio", filename)
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    headers = {
+        "xi-api-key": settings.elevenlabs_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.8,
+            "style": 0.2,
+            "use_speaker_boost": True,
+        },
+    }
+
+    with httpx.Client(timeout=30) as client:
+        response = client.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+
+    with open(filepath, "wb") as f:
+        f.write(response.content)
+
+    public_url = f"{settings.base_url}/static/audio/{filename}"
+    return public_url
+
+
+def cleanup_old_audio(max_age_seconds: int = 3600):
+    """Supprime les fichiers audio de plus d'une heure."""
+    import time
+    audio_dir = os.path.join("static", "audio")
+    if not os.path.exists(audio_dir):
+        return
+    now = time.time()
+    for fname in os.listdir(audio_dir):
+        fpath = os.path.join(audio_dir, fname)
+        if os.path.isfile(fpath) and (now - os.path.getmtime(fpath)) > max_age_seconds:
+            os.remove(fpath)

@@ -1,0 +1,155 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Paramètres — AssistantAI{% endblock %}
+{% block page_title %}Paramètres{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  {% if success == 'saved' %}✅ Paramètres sauvegardés avec succès.
+  {% elif success == 'google_connected' %}✅ Google Calendar connecté avec succès !
+  {% elif success == 'outlook_connected' %}✅ Outlook Calendar connecté avec succès !
+  {% endif %}
+</div>
+{% endif %}
+{% if error %}
+<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ⚠️ Erreur lors de la connexion. Vérifiez la configuration et réessayez.
+</div>
+{% endif %}
+
+<div class="max-w-3xl space-y-6">
+
+  <!-- Infos commerce -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-5">Informations du commerce</h2>
+    <form method="post" action="/dashboard/settings" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom du commerce</label>
+        <input type="text" name="business_name" value="{{ business.name }}"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Voice ID ElevenLabs</label>
+          <input type="text" name="voice_id" value="{{ business.elevenlabs_voice_id or '' }}"
+            placeholder="Laisser vide = voix par défaut"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder
+      </button>
+    </form>
+  </div>
+
+  <!-- Twilio -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-2">Configuration Twilio</h2>
+    <p class="text-sm text-gray-500 mb-5">
+      Configurez votre numéro Twilio. Le webhook appel entrant doit pointer vers :<br>
+      <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">{{ base_url }}/voice/{{ business.id }}/incoming</code>
+    </p>
+    <form method="post" action="/dashboard/settings" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Numéro Twilio</label>
+          <input type="text" name="twilio_phone" value="{{ business.twilio_phone_number or '' }}"
+            placeholder="+33XXXXXXXXX"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Account SID</label>
+          <input type="text" name="twilio_sid" value="{{ business.twilio_account_sid or '' }}"
+            placeholder="AC..."
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Auth Token</label>
+        <input type="password" name="twilio_token" value="{{ business.twilio_auth_token or '' }}"
+          placeholder="••••••••••••••••"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder Twilio
+      </button>
+    </form>
+  </div>
+
+  <!-- Google Calendar -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="font-semibold text-gray-900">Google Calendar</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Synchronisez vos RDV avec votre agenda Gmail</p>
+      </div>
+      {% if google_connected %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span> Connecté
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm">
+          Non connecté
+        </span>
+      {% endif %}
+    </div>
+    {% if google_enabled %}
+      {% if google_connected %}
+        <div class="flex gap-3">
+          <a href="/auth/google-calendar" class="text-sm text-primary hover:underline">Reconnecter un autre compte</a>
+        </div>
+      {% else %}
+        <a href="/auth/google-calendar"
+          class="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Connecter Google Calendar
+        </a>
+      {% endif %}
+    {% else %}
+      <p class="text-sm text-gray-400">Configurez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans .env pour activer.</p>
+    {% endif %}
+  </div>
+
+  <!-- Outlook -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="font-semibold text-gray-900">Outlook / Hotmail Calendar</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Synchronisez vos RDV avec Microsoft Outlook</p>
+      </div>
+      {% if outlook_connected %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span> Connecté
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm">
+          Non connecté
+        </span>
+      {% endif %}
+    </div>
+    {% if outlook_enabled %}
+      {% if outlook_connected %}
+        <a href="/auth/outlook" class="text-sm text-primary hover:underline">Reconnecter</a>
+      {% else %}
+        <a href="/auth/outlook"
+          class="inline-flex items-center gap-2 bg-[#0078d4] hover:bg-[#006bb3] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white">
+            <path d="M21.18 3H7.82C6.82 3 6 3.82 6 4.82v1.36L13.5 8.5 21 6.18V4.82C21 3.82 20.18 3 19.18 3z"/>
+            <path d="M6 7.7v9.48c0 1 .82 1.82 1.82 1.82h12.36c1 0 1.82-.82 1.82-1.82V7.7L13.5 10.3z"/>
+            <rect x="1" y="6" width="10" height="12" rx="2" fill="white" opacity="0.9"/>
+          </svg>
+          Connecter Outlook
+        </a>
+      {% endif %}
+    {% else %}
+      <p class="text-sm text-gray-400">Configurez AZURE_CLIENT_ID et AZURE_CLIENT_SECRET dans .env pour activer.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

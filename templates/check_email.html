@@ -1,0 +1,51 @@
+{% extends "base_public.html" %}
+{% block title %}Vérifiez votre e-mail — AssistantAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-16">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 w-full max-w-md text-center">
+
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-3">Vérifiez votre boîte mail</h1>
+
+    {% if error %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+      ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('resent') %}
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
+      ✅ E-mail renvoyé ! Vérifiez votre boîte de réception.
+    </div>
+    {% endif %}
+
+    <p class="text-gray-500 text-sm mb-8">
+      Nous vous avons envoyé un lien de confirmation à votre adresse e-mail.
+      Cliquez sur ce lien pour activer votre compte AssistantAI.
+    </p>
+
+    <div class="space-y-3">
+      <a href="/auth/resend-verification"
+        class="block w-full text-center bg-primary hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all">
+        Renvoyer l'e-mail de confirmation
+      </a>
+      <a href="/auth/login"
+        class="block text-center text-sm text-gray-400 hover:text-gray-600">
+        Retour à la connexion
+      </a>
+    </div>
+
+    <p class="text-xs text-gray-400 mt-8">
+      Pas d'e-mail reçu ? Vérifiez vos spams ou utilisez le bouton ci-dessus.
+    </p>
+
+  </div>
+</div>
+{% endblock %}

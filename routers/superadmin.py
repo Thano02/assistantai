@@ -1,0 +1,120 @@
+"""
+Super admin dashboard — réservé aux comptes is_superadmin=True.
+"""
+from fastapi import APIRouter, Request, Depends, Form
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
+from datetime import datetime
+
+from database import (
+    SessionLocal,
+    get_business_by_id,
+    get_all_active_businesses,
+    update_business,
+    Business,
+)
+from services.auth_service import get_current_business_id
+from utils import get_logger
+
+logger = get_logger(__name__)
+router = APIRouter()
+templates = Jinja2Templates(directory="templates")
+
+
+def require_superadmin(business_id: int = Depends(get_current_business_id)) -> int:
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, business_id)
+        if not business or not business.is_superadmin:
+            raise Exception("Forbidden")
+        return business_id
+    finally:
+        db.close()
+
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+@router.get("/dashboard")
+def superadmin_dashboard(request: Request, admin_id: int = Depends(require_superadmin)):
+    db = SessionLocal()
+    try:
+        businesses = db.query(Business).order_by(Business.created_at.desc()).all()
+        stats = {
+            "total": len(businesses),
+            "active": sum(1 for b in businesses if b.is_active),
+            "verified": sum(1 for b in businesses if b.email_verified),
+        }
+        return templates.TemplateResponse(
+            "superadmin/dashboard.html",
+            {"request": request, "businesses": businesses, "stats": stats},
+        )
+    finally:
+        db.close()
+
+
+@router.get("/business/{bid}")
+def superadmin_business_detail(request: Request, bid: int, admin_id: int = Depends(require_superadmin)):
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, bid)
+        if not business:
+            return RedirectResponse(url="/superadmin/dashboard")
+
+        from database import UsageLog, Reservation, Client
+        from sqlalchemy import func
+        reservations_count = db.query(func.count(Reservation.id)).filter(
+            Reservation.business_id == bid
+        ).scalar() or 0
+        clients_count = db.query(func.count(Client.id)).filter(
+            Client.business_id == bid
+        ).scalar() or 0
+
+        now = datetime.utcnow()
+        monthly_cost = db.query(func.sum(UsageLog.cost_eur)).filter(
+            UsageLog.business_id == bid,
+            func.extract("month", UsageLog.created_at) == now.month,
+            func.extract("year", UsageLog.created_at) == now.year,
+        ).scalar() or 0.0
+
+        return templates.TemplateResponse(
+            "superadmin/business_detail.html",
+            {
+                "request": request,
+                "business": business,
+                "reservations_count": reservations_count,
+                "clients_count": clients_count,
+                "monthly_cost": round(monthly_cost, 2),
+            },
+        )
+    finally:
+        db.close()
+
+
+@router.post("/business/{bid}/toggle")
+def superadmin_toggle_business(bid: int, admin_id: int = Depends(require_superadmin)):
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, bid)
+        if business:
+            update_business(db, bid, is_active=not business.is_active)
+            logger.info("Superadmin toggled business %d: is_active=%s", bid, not business.is_active)
+    finally:
+        db.close()
+    return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
+
+
+@router.post("/business/{bid}/plan")
+def superadmin_change_plan(
+    bid: int,
+    plan: str = Form(...),
+    admin_id: int = Depends(require_superadmin),
+):
+    if plan not in ("starter", "pro", "enterprise"):
+        return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
+    db = SessionLocal()
+    try:
+        update_business(db, bid, plan=plan)
+        logger.info("Superadmin changed plan for business %d to %s", bid, plan)
+    finally:
+        db.close()
+    return RedirectResponse(url=f"/superadmin/business/{bid}?success=plan_updated", status_code=303)

@@ -1,0 +1,153 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Employés — AssistantAI{% endblock %}
+{% block page_title %}Gestion des employés{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  {% if success == 'created' %}✅ Employé ajouté avec succès.
+  {% elif success == 'updated' %}✅ Employé mis à jour.
+  {% elif success == 'deleted' %}✅ Employé désactivé.
+  {% elif success == 'google_connected' %}✅ Google Calendar connecté pour cet employé.
+  {% elif success == 'outlook_connected' %}✅ Outlook connecté pour cet employé.
+  {% else %}✅ Opération réussie.{% endif %}
+</div>
+{% endif %}
+{% if error %}
+<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ⚠️ Une erreur s'est produite. Veuillez réessayer.
+</div>
+{% endif %}
+
+<div class="max-w-3xl space-y-6">
+
+  <!-- Activation mode sélection -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6 flex items-center justify-between">
+    <div>
+      <h2 class="font-semibold text-gray-900">Sélection d'employé par le robot</h2>
+      <p class="text-sm text-gray-500 mt-0.5">
+        Si activé, le robot proposera automatiquement de choisir un employé lors de la prise de RDV.
+      </p>
+    </div>
+    <form method="post" action="/api/employees/toggle-selection">
+      <button type="submit"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+               {{ 'bg-primary' if business.employee_selection_enabled else 'bg-gray-300' }}">
+        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                     {{ 'translate-x-6' if business.employee_selection_enabled else 'translate-x-1' }}"></span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Liste employés -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Employés actifs</h2>
+    {% if employees %}
+    <div class="space-y-3">
+      {% for emp in employees %}
+      <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+        <div>
+          <p class="font-medium text-gray-900">{{ emp.name }}</p>
+          <p class="text-xs text-gray-400">{{ emp.specialty or 'Aucune spécialité' }}</p>
+          <div class="flex gap-3 mt-1">
+            {% if emp.google_access_token %}
+            <span class="text-xs text-green-600">● Google Calendar</span>
+            {% else %}
+            <a href="/auth/employee/{{ emp.id }}/google" class="text-xs text-gray-400 hover:text-primary">+ Google</a>
+            {% endif %}
+            {% if emp.outlook_access_token %}
+            <span class="text-xs text-blue-600">● Outlook</span>
+            {% else %}
+            <a href="/auth/employee/{{ emp.id }}/outlook" class="text-xs text-gray-400 hover:text-primary">+ Outlook</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openEditModal({{ emp.id }}, '{{ emp.name }}', '{{ emp.specialty or '' }}')"
+            class="text-xs text-gray-500 hover:text-primary border border-gray-200 rounded px-2 py-1">
+            Modifier
+          </button>
+          <form method="post" action="/api/employees/{{ emp.id }}/delete"
+                onsubmit="return confirm('Désactiver {{ emp.name }} ?')">
+            <button class="text-xs text-red-400 hover:text-red-600 border border-red-100 rounded px-2 py-1">
+              Supprimer
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-400 py-4 text-center">Aucun employé ajouté. Ajoutez le premier ci-dessous.</p>
+    {% endif %}
+  </div>
+
+  <!-- Ajouter employé -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Ajouter un employé</h2>
+    <form method="post" action="/api/employees" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom</label>
+          <input type="text" name="name" required placeholder="Marie Dupont"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Spécialité (optionnel)</label>
+          <input type="text" name="specialty" placeholder="Coloriste, Barbier…"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+      <button type="submit"
+        class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Ajouter l'employé
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<!-- Modal édition -->
+<div id="edit-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+    <h3 class="font-semibold text-gray-900 mb-4">Modifier l'employé</h3>
+    <form method="post" id="edit-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom</label>
+        <input type="text" name="name" id="edit-name" required
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Spécialité</label>
+        <input type="text" name="specialty" id="edit-specialty"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" onclick="closeEditModal()"
+          class="text-sm text-gray-500 border border-gray-300 px-4 py-2 rounded-lg hover:border-gray-400">
+          Annuler
+        </button>
+        <button type="submit"
+          class="bg-primary text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">
+          Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditModal(id, name, specialty) {
+  document.getElementById('edit-form').action = `/api/employees/${id}/update`;
+  document.getElementById('edit-name').value = name;
+  document.getElementById('edit-specialty').value = specialty;
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.add('hidden');
+}
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+</script>
+{% endblock %}

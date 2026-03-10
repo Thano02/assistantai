@@ -1,0 +1,12 @@
+.env
+.env.*
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+static/audio/
+.venv/
+venv/
+*.log
+credentials.json

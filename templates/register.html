@@ -1,0 +1,49 @@
+{% extends "base_public.html" %}
+{% block title %}Inscription — AssistantAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+  <div class="max-w-lg w-full">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Créer votre compte</h1>
+      <p class="text-gray-500 mt-2">Votre assistant vocal opérationnel en 30 minutes</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      {% if error %}
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+        {{ error }}
+      </div>
+      {% endif %}
+      <form method="post" action="/auth/register" class="space-y-5">
+        <input type="hidden" name="plan" value="starter">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom de votre commerce</label>
+          <input type="text" name="business_name" required
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="Salon de coiffure Dupont">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+          <input type="email" name="email" required autocomplete="email"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="votre@email.com">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Mot de passe</label>
+          <input type="password" name="password" required minlength="8"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="8 caractères minimum">
+        </div>
+        <button type="submit"
+          class="w-full bg-primary hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors mt-2">
+          Créer mon compte →
+        </button>
+      </form>
+      <p class="text-center text-sm text-gray-500 mt-6">
+        Déjà un compte ?
+        <a href="/auth/login" class="text-primary font-medium hover:underline">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

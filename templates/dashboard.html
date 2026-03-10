@@ -1,0 +1,181 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Dashboard — AssistantAI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Robot status + quick actions -->
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div class="flex items-center gap-3">
+    {% if business.twilio_phone_number and business.twilio_account_sid %}
+    <span class="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+      <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+      Robot actif · {{ business.twilio_phone_number }}
+    </span>
+    {% else %}
+    <span class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium">
+      <span class="w-2 h-2 bg-orange-400 rounded-full"></span>
+      Robot non configuré
+    </span>
+    {% endif %}
+  </div>
+  <div class="flex gap-2">
+    <a href="/dashboard/calendar" class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg transition-colors">
+      📅 Calendrier
+    </a>
+    <a href="/dashboard/faq" class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg transition-colors">
+      💬 FAQ
+    </a>
+    <a href="/dashboard/employees" class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg transition-colors">
+      👥 Employés
+    </a>
+  </div>
+</div>
+
+<!-- Stats cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+  <div class="bg-white rounded-xl p-5 border border-gray-200">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">RDV aujourd'hui</p>
+    <p class="text-3xl font-bold text-gray-900 mt-1">{{ today_count }}</p>
+    <p class="text-xs text-gray-400 mt-1">confirmés</p>
+  </div>
+  <div class="bg-white rounded-xl p-5 border border-gray-200">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total clients</p>
+    <p class="text-3xl font-bold text-gray-900 mt-1">{{ total_clients }}</p>
+    <p class="text-xs text-gray-400 mt-1">enregistrés</p>
+  </div>
+  <div class="bg-white rounded-xl p-5 border border-gray-200">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">RDV confirmés</p>
+    <p class="text-3xl font-bold text-green-600 mt-1">{{ total_confirmed }}</p>
+    <p class="text-xs text-gray-400 mt-1">total</p>
+  </div>
+  <div class="bg-white rounded-xl p-5 border border-gray-200">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Conso ce mois</p>
+    <p class="text-3xl font-bold text-primary mt-1">{{ usage.billed_eur | round(2) }}€</p>
+    <p class="text-xs text-gray-400 mt-1">coût API estimé</p>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <!-- RDV du jour -->
+  <div class="bg-white rounded-xl border border-gray-200">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-900">Rendez-vous du jour</h2>
+      <span class="text-xs text-gray-400">{{ today_count }} RDV</span>
+    </div>
+    <div class="divide-y divide-gray-50">
+      {% if today_reservations %}
+        {% for rdv in today_reservations %}
+        <div class="px-5 py-4 flex items-center justify-between">
+          <div>
+            <p class="font-medium text-gray-900 text-sm">{{ rdv.client }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ rdv.service }} · {{ rdv.duration }} min</p>
+          </div>
+          <span class="text-sm font-semibold text-primary">{{ rdv.time }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="px-5 py-8 text-center text-gray-400 text-sm">
+          Aucun rendez-vous aujourd'hui
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Prochains RDV -->
+  <div class="bg-white rounded-xl border border-gray-200">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-900">Prochains 7 jours</h2>
+      <a href="/dashboard/calendar" class="text-xs text-primary hover:underline">Voir calendrier →</a>
+    </div>
+    <div class="divide-y divide-gray-50">
+      {% if upcoming %}
+        {% for rdv in upcoming %}
+        <div class="px-5 py-3 flex items-center justify-between">
+          <div>
+            <p class="font-medium text-gray-900 text-sm">{{ rdv.client }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ rdv.service }}</p>
+          </div>
+          <span class="text-xs text-gray-600 font-medium">{{ rdv.datetime }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="px-5 py-8 text-center text-gray-400 text-sm">
+          Aucun RDV à venir dans les 7 prochains jours
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Usage détail + Config rapide -->
+<div class="grid lg:grid-cols-2 gap-6 mt-6">
+  <!-- Usage API -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-gray-900">Consommation API ce mois</h2>
+      {% set plan_limits = {'starter': 30, 'pro': 100, 'enterprise': 999} %}
+      {% set limit = plan_limits.get(business.plan, 30) %}
+      {% set pct = [(usage.billed_eur / limit * 100), 100] | min | round | int %}
+      <span class="text-xs text-gray-400">{{ pct }}% du budget plan</span>
+    </div>
+    <!-- Progress bar -->
+    <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
+      <div class="h-2 rounded-full transition-all
+        {% if pct > 80 %}bg-red-500{% elif pct > 50 %}bg-yellow-400{% else %}bg-green-500{% endif %}"
+        style="width: {{ pct }}%">
+      </div>
+    </div>
+    <div class="space-y-3">
+      {% for event_type, cost in usage.breakdown.items() %}
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-600 capitalize">{{ event_type.replace('_', ' ') }}</span>
+        <span class="text-sm font-medium text-gray-900">{{ cost | round(4) }}€</span>
+      </div>
+      {% endfor %}
+      {% if not usage.breakdown %}
+        <p class="text-sm text-gray-400">Aucune consommation enregistrée ce mois</p>
+      {% endif %}
+    </div>
+    <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between">
+      <span class="text-sm font-semibold text-gray-900">Total facturé (× 1.70)</span>
+      <span class="text-sm font-bold text-primary">{{ usage.billed_eur | round(2) }}€</span>
+    </div>
+  </div>
+
+  <!-- Config rapide -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <h2 class="font-semibold text-gray-900 mb-4">Configuration rapide</h2>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between py-2 border-b border-gray-50">
+        <span class="text-sm text-gray-600">Webhook Twilio</span>
+        <code class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+          /voice/{{ business.id }}/incoming
+        </code>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-50">
+        <span class="text-sm text-gray-600">Numéro Twilio</span>
+        <span class="text-sm font-medium text-gray-900">
+          {{ business.twilio_phone_number or '⚠️ Non configuré' }}
+        </span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-50">
+        <span class="text-sm text-gray-600">Google Calendar</span>
+        <span class="text-xs px-2 py-1 rounded-full
+          {{ 'bg-green-100 text-green-700' if business.google_access_token else 'bg-gray-100 text-gray-500' }}">
+          {{ '✓ Connecté' if business.google_access_token else 'Non connecté' }}
+        </span>
+      </div>
+      <div class="flex items-center justify-between py-2">
+        <span class="text-sm text-gray-600">Outlook</span>
+        <span class="text-xs px-2 py-1 rounded-full
+          {{ 'bg-green-100 text-green-700' if business.outlook_access_token else 'bg-gray-100 text-gray-500' }}">
+          {{ '✓ Connecté' if business.outlook_access_token else 'Non connecté' }}
+        </span>
+      </div>
+    </div>
+    <a href="/dashboard/settings" class="block mt-4 text-center text-sm text-white bg-primary hover:bg-blue-700 rounded-lg py-2 transition-colors">
+      Configurer →
+    </a>
+  </div>
+</div>
+{% endblock %}

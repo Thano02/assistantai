@@ -1,0 +1,122 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Facturation — AssistantAI{% endblock %}
+{% block page_title %}Facturation{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ✅ Abonnement mis à jour avec succès !
+</div>
+{% endif %}
+
+<div class="max-w-3xl space-y-6">
+
+  <!-- Plan actuel -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <h2 class="font-semibold text-gray-900 mb-1">Plan actuel</h2>
+        <div class="flex items-center gap-3 mt-2">
+          <span class="text-2xl font-bold text-gray-900">{{ business.plan|capitalize }}</span>
+          <span class="text-xl font-semibold text-primary">{{ plan_price }}€/mois</span>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">+ consommation API × 1.70 facturée en fin de mois</p>
+      </div>
+      <div class="flex flex-col gap-2">
+        {% if portal_available %}
+        <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center">
+          Gérer l'abonnement
+        </a>
+        {% endif %}
+        <a href="/pricing" class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors text-center">
+          Changer de plan
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usage ce mois -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Consommation — {{ usage.period }}</h2>
+    <div class="space-y-3">
+      <div class="grid grid-cols-3 gap-4 text-xs font-medium text-gray-400 uppercase tracking-wide pb-2 border-b border-gray-100">
+        <span>Service</span><span class="text-right">Quantité</span><span class="text-right">Coût réel</span>
+      </div>
+      {% if usage.breakdown %}
+        {% for event_type, cost in usage.breakdown.items() %}
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <span class="text-gray-700 capitalize">{{ event_type.replace('_', ' ') }}</span>
+          <span class="text-right text-gray-500">—</span>
+          <span class="text-right font-medium text-gray-900">{{ cost | round(4) }}€</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-sm text-gray-400 py-2">Aucune consommation ce mois</p>
+      {% endif %}
+    </div>
+    <div class="border-t border-gray-100 mt-4 pt-4 space-y-2">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Abonnement {{ business.plan|capitalize }}</span>
+        <span class="font-medium">{{ plan_price }}€</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Conso API ({{ usage.api_cost_eur | round(4) }}€ × 1.70)</span>
+        <span class="font-medium">{{ usage.billed_eur | round(2) }}€</span>
+      </div>
+      <div class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
+        <span>Total estimé ce mois</span>
+        <span class="text-primary">{{ estimated_total | round(2) }}€</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Factures Stripe -->
+  {% if stripe_invoices %}
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Historique des factures</h2>
+    <div class="space-y-3">
+      {% for inv in stripe_invoices %}
+      <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+        <div>
+          <p class="text-sm font-medium text-gray-900">
+            {% set ts = inv.date %}
+            Facture {{ inv.id[:12] }}...
+          </p>
+          <p class="text-xs text-gray-400">{{ inv.status|capitalize }}</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm font-semibold text-gray-900">{{ inv.amount }}{{ inv.currency|upper }}</span>
+          {% if inv.pdf_url %}
+          <a href="{{ inv.pdf_url }}" target="_blank" class="text-xs text-primary hover:underline">PDF</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Changer de plan -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Changer de plan</h2>
+    <div class="grid grid-cols-3 gap-4">
+      {% for plan, price, desc in [("starter", "29€/mois", "Petits commerces"), ("pro", "79€/mois", "Commerces actifs"), ("enterprise", "199€/mois", "Illimité")] %}
+      <div class="border-2 rounded-xl p-4 text-center {{ 'border-primary bg-blue-50' if plan == business.plan else 'border-gray-200' }}">
+        <p class="font-bold text-gray-900 text-sm">{{ plan|capitalize }}</p>
+        <p class="text-primary font-semibold text-sm mt-1">{{ price }}</p>
+        <p class="text-gray-400 text-xs mt-1 mb-3">{{ desc }}</p>
+        {% if plan != business.plan %}
+        <a href="/stripe/subscribe/{{ plan }}"
+          class="block text-xs bg-primary hover:bg-blue-700 text-white py-1.5 rounded-lg transition-colors">
+          Choisir
+        </a>
+        {% else %}
+        <span class="block text-xs text-primary font-medium py-1.5">Plan actuel</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

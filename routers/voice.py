@@ -1,0 +1,227 @@
+"""
+Webhooks Twilio pour les appels vocaux (multi-tenant + fallback global).
+
+Routes:
+  POST /voice/incoming              → appel sans business_id (legacy)
+  POST /voice/{business_id}/incoming → appel multi-tenant
+"""
+from fastapi import APIRouter, Form, Response
+from twilio.twiml.voice_response import VoiceResponse, Gather
+from typing import Optional
+
+from services.ai_service import process_speech, get_welcome_message, get_session, end_session
+from services.tts_service import text_to_speech
+from database import SessionLocal, update_client_last_call, get_business_by_id
+from utils import get_logger
+
+logger = get_logger(__name__)
+router = APIRouter()
+
+GATHER_TIMEOUT = 5
+GATHER_SPEECH_TIMEOUT = 2
+
+
+# ── TwiML helpers ──────────────────────────────────────────────────────────────
+
+def _twiml_response(text: str, action_url: str) -> str:
+    """TwiML avec audio ElevenLabs + Gather pour la prochaine parole."""
+    audio_url = text_to_speech(text)
+    response = VoiceResponse()
+    gather = Gather(
+        input="speech",
+        action=action_url,
+        method="POST",
+        language="fr-FR",
+        speech_timeout=str(GATHER_SPEECH_TIMEOUT),
+        timeout=str(GATHER_TIMEOUT),
+        action_on_empty_result=True,
+    )
+    gather.play(audio_url)
+    response.append(gather)
+    no_input_url = action_url.replace("/process", "/no-input")
+    response.redirect(no_input_url, method="POST")
+    return str(response)
+
+
+def _twiml_hangup(text: str) -> str:
+    """TwiML avec message d'au revoir puis raccroche."""
+    audio_url = text_to_speech(text)
+    response = VoiceResponse()
+    response.play(audio_url)
+    response.hangup()
+    return str(response)
+
+
+def _twiml_unavailable() -> str:
+    response = VoiceResponse()
+    response.say(
+        "Ce service est temporairement indisponible. Veuillez rappeler plus tard. Merci.",
+        language="fr-FR",
+    )
+    response.hangup()
+    return str(response)
+
+
+# ── Core handlers (shared logic) ───────────────────────────────────────────────
+
+def _handle_incoming(call_sid: str, caller_phone: str, base_process_url: str,
+                     business_id: int | None = None) -> Response:
+    db = SessionLocal()
+    try:
+        if business_id:
+            business = get_business_by_id(db, business_id)
+            if not business or not business.is_active:
+                return Response(content=_twiml_unavailable(), media_type="application/xml")
+        update_client_last_call(db, caller_phone)
+    finally:
+        db.close()
+
+    welcome_text = get_welcome_message(caller_phone, business_id)
+    twiml = _twiml_response(welcome_text, base_process_url)
+    return Response(content=twiml, media_type="application/xml")
+
+
+def _handle_process(call_sid: str, caller_phone: str, speech: str,
+                    process_url: str, no_input_url: str,
+                    business_id: int | None = None) -> Response:
+    if not speech:
+        audio_url = text_to_speech("Je n'ai pas entendu votre réponse. Pouvez-vous répéter ?")
+        response = VoiceResponse()
+        gather = Gather(
+            input="speech", action=process_url, method="POST",
+            language="fr-FR",
+            speech_timeout=str(GATHER_SPEECH_TIMEOUT), timeout=str(GATHER_TIMEOUT),
+        )
+        gather.play(audio_url)
+        response.append(gather)
+        response.redirect(no_input_url, method="POST")
+        return Response(content=str(response), media_type="application/xml")
+
+    reply_text, should_hangup = process_speech(call_sid, caller_phone, speech, business_id)
+
+    if should_hangup:
+        twiml = _twiml_hangup(reply_text)
+        end_session(call_sid)
+    else:
+        twiml = _twiml_response(reply_text, process_url)
+
+    return Response(content=twiml, media_type="application/xml")
+
+
+def _handle_no_input(call_sid: str, caller_phone: str,
+                     process_url: str, no_input_url: str) -> Response:
+    session = get_session(call_sid, caller_phone)
+    count = getattr(session, "_no_input_count", 0) + 1
+    session._no_input_count = count
+
+    if count >= 2:
+        end_session(call_sid)
+        return Response(
+            content=_twiml_hangup("Je ne vous entends pas. N'hésitez pas à rappeler. Au revoir !"),
+            media_type="application/xml",
+        )
+
+    audio_url = text_to_speech("Je ne vous entends pas bien. Pouvez-vous parler directement dans le téléphone ?")
+    response = VoiceResponse()
+    gather = Gather(
+        input="speech", action=process_url, method="POST",
+        language="fr-FR",
+        speech_timeout=str(GATHER_SPEECH_TIMEOUT), timeout=str(GATHER_TIMEOUT),
+    )
+    gather.play(audio_url)
+    response.append(gather)
+    response.redirect(no_input_url, method="POST")
+    return Response(content=str(response), media_type="application/xml")
+
+
+# ── Routes globales (legacy / sans business_id) ───────────────────────────────
+
+@router.post("/incoming")
+def voice_incoming(
+    CallSid: str = Form(...),
+    From: str = Form(...),
+    To: Optional[str] = Form(None),
+):
+    return _handle_incoming(CallSid, From, "/voice/process")
+
+
+@router.post("/process")
+def voice_process(
+    SpeechResult: Optional[str] = Form(None),
+    CallSid: str = Form(...),
+    From: str = Form(...),
+):
+    return _handle_process(CallSid, From, (SpeechResult or "").strip(),
+                           "/voice/process", "/voice/no-input")
+
+
+@router.post("/no-input")
+def voice_no_input(
+    CallSid: str = Form(...),
+    From: str = Form(...),
+):
+    return _handle_no_input(CallSid, From, "/voice/process", "/voice/no-input")
+
+
+@router.post("/end")
+def voice_end(
+    CallSid: str = Form(...),
+    CallStatus: Optional[str] = Form(None),
+    CallDuration: Optional[str] = Form(None),
+):
+    """Webhook fin d'appel (statusCallback)."""
+    if CallDuration:
+        try:
+            db = SessionLocal()
+            # track call duration for billing if we have a session with business_id
+            from services.usage_tracker import track_voice_call
+            session = get_session(CallSid, "")
+            if session.business_id:
+                minutes = max(1, round(int(CallDuration) / 60))
+                track_voice_call(session.business_id, minutes)
+        except Exception:
+            pass
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+    end_session(CallSid)
+    return {"status": "ok"}
+
+
+# ── Routes multi-tenant ───────────────────────────────────────────────────────
+
+@router.post("/{business_id}/incoming")
+def voice_incoming_tenant(
+    business_id: int,
+    CallSid: str = Form(...),
+    From: str = Form(...),
+    To: Optional[str] = Form(None),
+):
+    process_url = f"/voice/{business_id}/process"
+    return _handle_incoming(CallSid, From, process_url, business_id)
+
+
+@router.post("/{business_id}/process")
+def voice_process_tenant(
+    business_id: int,
+    SpeechResult: Optional[str] = Form(None),
+    CallSid: str = Form(...),
+    From: str = Form(...),
+):
+    process_url = f"/voice/{business_id}/process"
+    no_input_url = f"/voice/{business_id}/no-input"
+    return _handle_process(CallSid, From, (SpeechResult or "").strip(),
+                           process_url, no_input_url, business_id)
+
+
+@router.post("/{business_id}/no-input")
+def voice_no_input_tenant(
+    business_id: int,
+    CallSid: str = Form(...),
+    From: str = Form(...),
+):
+    process_url = f"/voice/{business_id}/process"
+    no_input_url = f"/voice/{business_id}/no-input"
+    return _handle_no_input(CallSid, From, process_url, no_input_url)

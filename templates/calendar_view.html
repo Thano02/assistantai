@@ -1,0 +1,108 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Calendrier — AssistantAI{% endblock %}
+{% block page_title %}Calendrier des réservations{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<style>
+  .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 600; }
+  .fc .fc-button-primary { background-color: #2563eb; border-color: #2563eb; }
+  .fc .fc-button-primary:hover { background-color: #1d4ed8; }
+  .fc .fc-button-primary:not(:disabled).fc-button-active { background-color: #1d4ed8; }
+  .fc-event { cursor: pointer; font-size: 0.75rem; border-radius: 4px; }
+  .fc td, .fc th { border-color: #f1f5f9 !important; }
+  #modal-overlay { backdrop-filter: blur(2px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex gap-6 h-full">
+  <!-- Calendrier principal -->
+  <div class="flex-1 bg-white rounded-xl border border-gray-200 p-5 min-h-0">
+    <div id="calendar" class="h-full"></div>
+  </div>
+
+  <!-- Panneau latéral -->
+  <div class="w-72 flex-shrink-0 space-y-4">
+    <!-- Ajouter RDV manuel -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-900 mb-4">Nouveau RDV manuel</h3>
+      <form id="create-form" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nom client</label>
+          <input id="f-name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Prénom Nom">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+          <input id="f-phone" type="tel" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="+33600000000">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Service</label>
+          <select id="f-service" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            {% for svc in services %}
+            <option value="{{ svc.name }}" data-duration="{{ svc.duration }}">{{ svc.name }} ({{ svc.duration }}min)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Date &amp; heure</label>
+          <input id="f-datetime" type="datetime-local" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="f-sms" type="checkbox" checked class="rounded">
+          <label for="f-sms" class="text-xs text-gray-600">Envoyer SMS confirmation</label>
+        </div>
+        <button type="submit" class="w-full bg-primary hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+          Créer le RDV
+        </button>
+        <p id="create-msg" class="text-xs text-center hidden"></p>
+      </form>
+    </div>
+
+    <!-- Légende -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-900 mb-3">Légende</h3>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-[#2563eb]"></div><span class="text-xs text-gray-600">Robot vocal</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-[#7c3aed]"></div><span class="text-xs text-gray-600">Ajouté manuellement</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-[#16a34a]"></div><span class="text-xs text-gray-600">Google Calendar</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-[#ea580c]"></div><span class="text-xs text-gray-600">Outlook</span></div>
+      </div>
+    </div>
+
+    <!-- Créneaux disponibles -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-900 mb-3">Créneaux disponibles</h3>
+      <div class="flex gap-2 mb-3">
+        <input id="slot-date" type="date" class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary">
+        <button onclick="checkSlots()" class="bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-medium">OK</button>
+      </div>
+      <div id="slots-result" class="text-xs text-gray-500">Sélectionnez une date</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal détail RDV -->
+<div id="modal-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+    <div class="flex items-start justify-between mb-4">
+      <h3 class="font-semibold text-gray-900 text-lg">Détail du rendez-vous</h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <div id="modal-content" class="space-y-3 text-sm text-gray-700"></div>
+    <div class="flex gap-3 mt-6">
+      <button id="btn-cancel" onclick="cancelReservation()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg font-medium transition-colors">
+        Annuler le RDV
+      </button>
+      <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="/static/js/calendar.js"></script>
+{% endblock %}

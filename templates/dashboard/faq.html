@@ -1,0 +1,146 @@
+{% extends "base_dashboard.html" %}
+{% block title %}FAQ — AssistantAI{% endblock %}
+{% block page_title %}Réponses automatiques (FAQ){% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  {% if success == 'saved' %}✅ FAQ sauvegardée.
+  {% elif success == 'defaults_loaded' %}✅ FAQ par défaut chargée.
+  {% elif success == 'deleted' %}✅ Question supprimée.
+  {% else %}✅ Opération réussie.{% endif %}
+</div>
+{% endif %}
+
+<div class="max-w-3xl space-y-6">
+
+  <!-- Type profession -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-2">Type de profession</h2>
+    <p class="text-sm text-gray-500 mb-4">
+      Choisissez votre type de commerce pour charger les questions fréquentes prédéfinies.
+    </p>
+    <form method="post" action="/dashboard/faq/profession" class="flex gap-3 items-end flex-wrap">
+      <select name="profession_type"
+        class="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        {% for key, label in [
+          ('salon', 'Salon de coiffure / Esthétique'),
+          ('restaurant', 'Restaurant / Bar'),
+          ('medecin', 'Médecin / Clinique'),
+          ('avocat', 'Avocat / Cabinet juridique'),
+          ('comptable', 'Comptable / Expert-comptable'),
+          ('autre', 'Autre'),
+        ] %}
+        <option value="{{ key }}" {{ 'selected' if business.profession_type == key }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium">
+        Sauvegarder
+      </button>
+    </form>
+    <form method="post" action="/dashboard/faq/load-defaults" class="mt-3">
+      <button type="submit"
+        onclick="return confirm('Cela remplacera les questions actuelles par celles par défaut. Continuer ?')"
+        class="text-sm text-primary hover:underline">
+        Charger les questions par défaut pour ce métier →
+      </button>
+    </form>
+  </div>
+
+  <!-- Liste FAQ -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-gray-900">Questions / Réponses</h2>
+      <button onclick="document.getElementById('add-form').classList.toggle('hidden')"
+        class="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        + Ajouter
+      </button>
+    </div>
+
+    <!-- Formulaire ajout -->
+    <div id="add-form" class="hidden bg-blue-50 rounded-xl p-4 mb-4">
+      <form method="post" action="/dashboard/faq" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Question</label>
+          <input type="text" name="question" required placeholder="Quels sont vos tarifs ?"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Réponse</label>
+          <textarea name="answer" required rows="3" placeholder="Nos tarifs commencent à…"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit"
+            class="bg-primary text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">
+            Ajouter
+          </button>
+          <button type="button" onclick="document.getElementById('add-form').classList.add('hidden')"
+            class="text-sm text-gray-500 border border-gray-300 px-4 py-2 rounded-lg">
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {% if faqs %}
+    <div class="space-y-3" id="faq-list">
+      {% for faq in faqs %}
+      <div class="border border-gray-100 rounded-xl p-4" id="faq-{{ faq.id }}">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1" id="view-{{ faq.id }}">
+            <p class="text-sm font-medium text-gray-900">{{ faq.question }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ faq.answer }}</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="toggleEdit({{ faq.id }})"
+              class="text-xs text-gray-500 hover:text-primary border border-gray-200 rounded px-2 py-1">
+              Modifier
+            </button>
+            <form method="post" action="/dashboard/faq/{{ faq.id }}/delete"
+                  onsubmit="return confirm('Supprimer cette question ?')">
+              <button class="text-xs text-red-400 hover:text-red-600 border border-red-100 rounded px-2 py-1">
+                ×
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Inline edit -->
+        <div id="edit-{{ faq.id }}" class="hidden mt-3 pt-3 border-t border-gray-100">
+          <form method="post" action="/dashboard/faq/{{ faq.id }}/update" class="space-y-2">
+            <input type="text" name="question" value="{{ faq.question }}" required
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <textarea name="answer" rows="2" required
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none">{{ faq.answer }}</textarea>
+            <div class="flex gap-2">
+              <button class="bg-primary text-white text-xs px-3 py-1.5 rounded-lg">Sauvegarder</button>
+              <button type="button" onclick="toggleEdit({{ faq.id }})"
+                class="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg">Annuler</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+      <p class="text-sm text-gray-400 mb-3">Aucune question configurée.</p>
+      <form method="post" action="/dashboard/faq/load-defaults">
+        <button class="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          Charger les questions par défaut
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function toggleEdit(id) {
+  document.getElementById('view-' + id).classList.toggle('hidden');
+  document.getElementById('edit-' + id).classList.toggle('hidden');
+}
+</script>
+{% endblock %}

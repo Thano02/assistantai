@@ -1,0 +1,28 @@
+{
+  "name": "Mon Commerce",
+  "address": "12 Rue de la République, 75001 Paris",
+  "phone": "+33XXXXXXXXX",
+  "timezone": "Europe/Paris",
+  "services": [
+    { "name": "Coupe homme", "duration": 30, "price": 25 },
+    { "name": "Coupe femme", "duration": 60, "price": 45 },
+    { "name": "Coupe + brushing", "duration": 75, "price": 55 },
+    { "name": "Coloration complète", "duration": 120, "price": 85 },
+    { "name": "Mèches / balayage", "duration": 150, "price": 95 },
+    { "name": "Soin capillaire", "duration": 45, "price": 35 },
+    { "name": "Barbe", "duration": 20, "price": 15 },
+    { "name": "Coupe enfant", "duration": 20, "price": 18 }
+  ],
+  "working_hours": {
+    "monday":    { "open": "09:00", "close": "19:00" },
+    "tuesday":   { "open": "09:00", "close": "19:00" },
+    "wednesday": { "open": "09:00", "close": "19:00" },
+    "thursday":  { "open": "09:00", "close": "19:00" },
+    "friday":    { "open": "09:00", "close": "20:00" },
+    "saturday":  { "open": "09:00", "close": "18:00" },
+    "sunday":    null
+  },
+  "slot_interval_minutes": 15,
+  "max_advance_booking_days": 30,
+  "sms_reminder_hours_before": 24
+}

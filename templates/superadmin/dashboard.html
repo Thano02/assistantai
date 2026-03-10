@@ -1,0 +1,91 @@
+{% extends "superadmin/base.html" %}
+{% block title %}Commerces — Super Admin{% endblock %}
+{% block page_title %}Tous les commerces{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="grid grid-cols-3 gap-4 mb-8">
+  {% for label, value, color in [
+    ("Total commerces", stats.total, "text-white"),
+    ("Actifs", stats.active, "text-green-400"),
+    ("E-mail vérifiés", stats.verified, "text-blue-400"),
+  ] %}
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ label }}</p>
+    <p class="text-3xl font-bold {{ color }}">{{ value }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Table -->
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+    <h2 class="font-semibold text-sm">Liste des commerces</h2>
+    <input type="text" id="search" placeholder="Rechercher…"
+           oninput="filterTable(this.value)"
+           class="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary w-48">
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" id="biz-table">
+      <thead>
+        <tr class="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-800">
+          <th class="px-6 py-3 text-left">Commerce</th>
+          <th class="px-6 py-3 text-left">Email</th>
+          <th class="px-6 py-3 text-left">Plan</th>
+          <th class="px-6 py-3 text-left">Statut</th>
+          <th class="px-6 py-3 text-left">Inscrit le</th>
+          <th class="px-6 py-3 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for b in businesses %}
+        <tr class="hover:bg-gray-800/50 transition-colors biz-row">
+          <td class="px-6 py-3 font-medium text-white">{{ b.name }}</td>
+          <td class="px-6 py-3 text-gray-400">{{ b.owner_email }}</td>
+          <td class="px-6 py-3">
+            <span class="px-2 py-0.5 rounded text-xs font-semibold
+              {% if b.plan == 'enterprise' %}bg-purple-900 text-purple-300
+              {% elif b.plan == 'pro' %}bg-blue-900 text-blue-300
+              {% else %}bg-gray-700 text-gray-300{% endif %}">
+              {{ b.plan|capitalize }}
+            </span>
+          </td>
+          <td class="px-6 py-3">
+            {% if b.is_active %}
+              <span class="inline-flex items-center gap-1 text-green-400 text-xs">
+                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> Actif
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-red-400 text-xs">
+                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span> Inactif
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-3 text-gray-400 text-xs">
+            {{ b.created_at.strftime('%d/%m/%Y') if b.created_at else '—' }}
+          </td>
+          <td class="px-6 py-3">
+            <a href="/superadmin/business/{{ b.id }}"
+               class="text-xs text-primary hover:underline mr-3">Détail</a>
+            <form method="post" action="/superadmin/business/{{ b.id }}/toggle" class="inline">
+              <button class="text-xs {{ 'text-red-400 hover:text-red-300' if b.is_active else 'text-green-400 hover:text-green-300' }}">
+                {{ 'Désactiver' if b.is_active else 'Activer' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterTable(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.biz-row').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+twilio==9.3.2
+openai==1.50.0
+elevenlabs==1.9.0
+sqlalchemy==2.0.35
+python-dotenv==1.0.1
+apscheduler==3.10.4
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.149.0
+httpx==0.27.2
+pydantic==2.9.2
+python-multipart==0.0.12
+aiofiles==24.1.0
+pytz==2024.2
+# Web dashboard
+jinja2==3.1.4
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+# stripe==10.12.0   # Optionnel — activer pour la facturation
+# msal==1.31.0      # Optionnel — activer pour Outlook Calendar

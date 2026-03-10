@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Assistant AI{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#2563eb', dark: '#1d4ed8', light: '#3b82f6' }
+          }
+        }
+      }
+    }
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-white text-gray-900 font-sans">
+
+<!-- Navbar -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+          </svg>
+        </div>
+        <span class="font-bold text-xl text-gray-900">Assistant<span class="text-primary">AI</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="/#features" class="text-gray-600 hover:text-primary transition-colors">Fonctionnalités</a>
+        <a href="/pricing" class="text-gray-600 hover:text-primary transition-colors">Tarifs</a>
+        <a href="/auth/login" class="text-gray-600 hover:text-primary transition-colors">Connexion</a>
+        <a href="/auth/register" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg font-medium transition-colors">
+          Commencer gratuitement
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main content -->
+<main class="pt-16">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-gray-400 py-12 mt-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>
+        <span class="font-bold text-white text-lg">Assistant<span class="text-blue-400">AI</span></span>
+        <p class="text-sm mt-1">Robot IA vocal pour vos réservations</p>
+      </div>
+      <div class="flex gap-6 text-sm">
+        <a href="/pricing" class="hover:text-white transition-colors">Tarifs</a>
+        <a href="/auth/register" class="hover:text-white transition-colors">Inscription</a>
+        <a href="/auth/login" class="hover:text-white transition-colors">Connexion</a>
+      </div>
+      <p class="text-sm">© 2024 AssistantAI. Tous droits réservés.</p>
+    </div>
+  </div>
+</footer>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
