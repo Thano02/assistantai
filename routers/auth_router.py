@@ -80,7 +80,7 @@ def check_email_page(request: Request):
     return templates.TemplateResponse("check_email.html", {"request": request})
 
 
-@router.get("/verify-email")
+@router.get("/verify-email/{token}")
 def verify_email(request: Request, token: str):
     db = SessionLocal()
     try:

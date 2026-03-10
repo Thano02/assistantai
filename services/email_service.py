@@ -37,7 +37,8 @@ def _send(to: str, subject: str, html: str) -> bool:
 # ── Email verification ────────────────────────────────────────────────────────
 
 def send_verification_email(email: str, token: str, business_name: str) -> bool:
-    verify_url = f"{settings.base_url}/auth/verify-email?token={token}"
+    base = settings.base_url.rstrip("/")
+    verify_url = f"{base}/auth/verify-email/{token}"
     html = f"""
     <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px">
       <h2 style="color:#1a1a2e;margin-bottom:8px">Bienvenue sur AssistantAI 👋</h2>
