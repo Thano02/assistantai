@@ -174,32 +174,6 @@
   </div>
 </section>
 
-<!-- Technologie -->
-<section class="bg-gray-950 py-20">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-bold text-white mb-3">Propulsé par les meilleures technologies IA</h2>
-      <p class="text-gray-400">Nous assemblons le meilleur du marché pour vous.</p>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-      {% for name, role, color in [
-        ("OpenAI GPT-4o", "Intelligence conversationnelle", "blue"),
-        ("ElevenLabs", "Voix ultra-réaliste en français", "violet"),
-        ("Twilio", "Infrastructure téléphonique", "red"),
-        ("Google / Outlook", "Synchronisation agenda", "green"),
-      ] %}
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
-        <div class="w-12 h-12 bg-{{ color }}-600/15 rounded-xl flex items-center justify-center mx-auto mb-3">
-          <span class="text-{{ color }}-400 font-black text-lg">{{ name[0] }}</span>
-        </div>
-        <p class="text-white font-semibold text-sm mb-1">{{ name }}</p>
-        <p class="text-gray-500 text-xs">{{ role }}</p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
 <!-- Formulaire de contact / projet -->
 <section class="bg-gray-900 border-t border-gray-800 py-24" id="contact">
   <div class="max-w-2xl mx-auto px-4 sm:px-6">
