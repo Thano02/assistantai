@@ -12,10 +12,36 @@ from routers import web, auth_router, calendar_api
 from routers import superadmin, employees
 
 
+def _create_superadmin_if_needed():
+    """Crée le superadmin depuis SUPERADMIN_EMAIL + SUPERADMIN_PASSWORD si définis."""
+    email = os.getenv("SUPERADMIN_EMAIL")
+    password = os.getenv("SUPERADMIN_PASSWORD")
+    if not email or not password:
+        return
+    from database import SessionLocal, get_business_by_email, create_business, update_business
+    from services.auth_service import hash_password
+    import logging
+    db = SessionLocal()
+    try:
+        existing = get_business_by_email(db, email)
+        if existing and existing.is_superadmin:
+            return  # déjà superadmin, rien à faire
+        if existing:
+            update_business(db, existing.id, is_superadmin=True, email_verified=True, subscription_paid=True)
+        else:
+            b = create_business(db, name="SuperAdmin", owner_email=email,
+                                password_hash=hash_password(password), plan="enterprise")
+            update_business(db, b.id, is_superadmin=True, email_verified=True, subscription_paid=True)
+        logging.info("✅ Superadmin créé/promu : %s", email)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ── Startup ──
     init_db()
+    _create_superadmin_if_needed()
     os.makedirs("static/audio", exist_ok=True)
     os.makedirs("static/css", exist_ok=True)
     os.makedirs("static/js", exist_ok=True)
