@@ -48,34 +48,6 @@
       </a>
     </div>
 
-    <!-- What you need -->
-    <div class="bg-gray-50 rounded-2xl p-8 text-left max-w-2xl mx-auto">
-      <h2 class="text-xl font-bold text-gray-900 mb-2 text-center">Ce dont vous avez besoin</h2>
-      <p class="text-sm text-gray-500 text-center mb-6">Vos propres clés API pour les services tiers</p>
-      <div class="space-y-4">
-        {% for service, desc, url in [
-          ("Twilio", "Numéro de téléphone vocal + SMS", "https://twilio.com"),
-          ("OpenAI", "Intelligence artificielle GPT-4o", "https://platform.openai.com"),
-          ("ElevenLabs", "Voix naturelle en français", "https://elevenlabs.io"),
-        ] %}
-        <div class="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-          <div>
-            <p class="font-semibold text-gray-900 text-sm">{{ service }}</p>
-            <p class="text-xs text-gray-500 mt-0.5">{{ desc }}</p>
-          </div>
-          <a href="{{ url }}" target="_blank" rel="noopener"
-            class="text-xs text-primary hover:underline font-medium">
-            Obtenir →
-          </a>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <p class="text-sm text-gray-400 mt-10">
-      Vous gérez vos propres clés API — vos données restent sous votre contrôle.
-    </p>
-
   </div>
 </section>
 {% endblock %}

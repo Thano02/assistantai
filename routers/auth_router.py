@@ -103,13 +103,7 @@ def verify_email(request: Request, token: str):
         )
         send_welcome_email(business.owner_email, business.name)
 
-        jwt_token = create_access_token(business.id, business.owner_email)
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(
-            "access_token", jwt_token,
-            httponly=True, max_age=60 * 60 * 24 * 30, samesite="lax",
-        )
-        return response
+        return RedirectResponse(url="/auth/login?verified=1", status_code=303)
     finally:
         db.close()
 
@@ -144,8 +138,8 @@ def resend_verification(request: Request):
 # ── Connexion ─────────────────────────────────────────────────────────────────
 
 @router.get("/login")
-def login_page(request: Request, error: str = None):
-    return templates.TemplateResponse("login.html", {"request": request, "error": error})
+def login_page(request: Request, error: str = None, verified: str = None):
+    return templates.TemplateResponse("login.html", {"request": request, "error": error, "verified": verified})
 
 
 @router.post("/login")
