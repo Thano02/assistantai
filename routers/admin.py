@@ -191,9 +191,11 @@ def get_stats():
         db.close()
 
 
-@router.get("/setup-superadmin", dependencies=[Depends(verify_admin)])
-def setup_superadmin(email: str, password: str, name: str = "SuperAdmin"):
+@router.get("/setup-superadmin")
+def setup_superadmin(email: str, password: str, key: str, name: str = "SuperAdmin"):
     """Crée ou promeut un compte superadmin. Appeler une seule fois."""
+    if key != ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Clé invalide")
     from services.auth_service import hash_password
     db = SessionLocal()
     try:
