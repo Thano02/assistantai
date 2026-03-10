@@ -38,11 +38,12 @@ def require_superadmin(business_id: int = Depends(get_current_business_id)) -> i
 def superadmin_dashboard(request: Request, admin_id: int = Depends(require_superadmin)):
     db = SessionLocal()
     try:
-        businesses = db.query(Business).order_by(Business.created_at.desc()).all()
+        businesses = db.query(Business).filter(Business.is_superadmin == False).order_by(Business.created_at.desc()).all()
         stats = {
             "total": len(businesses),
-            "active": sum(1 for b in businesses if b.is_active),
-            "verified": sum(1 for b in businesses if b.email_verified),
+            "paid": sum(1 for b in businesses if b.subscription_paid),
+            "unpaid": sum(1 for b in businesses if not b.subscription_paid and b.is_active),
+            "inactive": sum(1 for b in businesses if not b.is_active),
         }
         return templates.TemplateResponse(
             "superadmin/dashboard.html",
@@ -101,6 +102,20 @@ def superadmin_toggle_business(bid: int, admin_id: int = Depends(require_superad
     finally:
         db.close()
     return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
+
+
+@router.post("/business/{bid}/payment")
+def superadmin_toggle_payment(bid: int, admin_id: int = Depends(require_superadmin)):
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, bid)
+        if business:
+            new_val = not business.subscription_paid
+            update_business(db, bid, subscription_paid=new_val)
+            logger.info("Superadmin toggled payment for business %d: paid=%s", bid, new_val)
+    finally:
+        db.close()
+    return RedirectResponse(url="/superadmin/dashboard", status_code=303)
 
 
 @router.post("/business/{bid}/plan")

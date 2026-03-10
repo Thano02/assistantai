@@ -1,90 +1,151 @@
 {% extends "superadmin/base.html" %}
-{% block title %}Commerces — Super Admin{% endblock %}
-{% block page_title %}Tous les commerces{% endblock %}
+{% block title %}Clients — Super Admin{% endblock %}
+{% block page_title %}Gestion des clients{% endblock %}
 
 {% block content %}
+
 <!-- Stats -->
-<div class="grid grid-cols-3 gap-4 mb-8">
-  {% for label, value, color in [
-    ("Total commerces", stats.total, "text-white"),
-    ("Actifs", stats.active, "text-green-400"),
-    ("E-mail vérifiés", stats.verified, "text-blue-400"),
-  ] %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ label }}</p>
-    <p class="text-3xl font-bold {{ color }}">{{ value }}</p>
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total clients</p>
+    <p class="text-3xl font-bold text-white">{{ stats.total }}</p>
   </div>
-  {% endfor %}
+  <div class="bg-gray-900 border border-green-900 rounded-xl p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Abonnés payants</p>
+    <p class="text-3xl font-bold text-green-400">{{ stats.paid }}</p>
+    <p class="text-xs text-gray-600 mt-1">paiement confirmé</p>
+  </div>
+  <div class="bg-gray-900 border border-yellow-900 rounded-xl p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Non payés</p>
+    <p class="text-3xl font-bold text-yellow-400">{{ stats.unpaid }}</p>
+    <p class="text-xs text-gray-600 mt-1">en attente</p>
+  </div>
+  <div class="bg-gray-900 border border-red-900 rounded-xl p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Désactivés</p>
+    <p class="text-3xl font-bold text-red-400">{{ stats.inactive }}</p>
+    <p class="text-xs text-gray-600 mt-1">accès coupé</p>
+  </div>
+</div>
+
+<!-- Filtres + recherche -->
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+  <button onclick="filterStatus('all')" id="btn-all" class="filter-btn active">Tous ({{ stats.total }})</button>
+  <button onclick="filterStatus('paid')" id="btn-paid" class="filter-btn">Payés ({{ stats.paid }})</button>
+  <button onclick="filterStatus('unpaid')" id="btn-unpaid" class="filter-btn">Non payés ({{ stats.unpaid }})</button>
+  <button onclick="filterStatus('inactive')" id="btn-inactive" class="filter-btn">Désactivés ({{ stats.inactive }})</button>
+  <div class="ml-auto">
+    <input type="text" id="search" placeholder="Rechercher…" oninput="applyFilters()"
+           class="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 w-52">
+  </div>
 </div>
 
 <!-- Table -->
 <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-  <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-    <h2 class="font-semibold text-sm">Liste des commerces</h2>
-    <input type="text" id="search" placeholder="Rechercher…"
-           oninput="filterTable(this.value)"
-           class="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary w-48">
-  </div>
   <div class="overflow-x-auto">
-    <table class="w-full text-sm" id="biz-table">
+    <table class="w-full text-sm">
       <thead>
-        <tr class="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-800">
-          <th class="px-6 py-3 text-left">Commerce</th>
-          <th class="px-6 py-3 text-left">Email</th>
-          <th class="px-6 py-3 text-left">Plan</th>
-          <th class="px-6 py-3 text-left">Statut</th>
-          <th class="px-6 py-3 text-left">Inscrit le</th>
-          <th class="px-6 py-3 text-left">Actions</th>
+        <tr class="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-800 bg-gray-950">
+          <th class="px-5 py-3 text-left">Commerce</th>
+          <th class="px-5 py-3 text-left">Email</th>
+          <th class="px-5 py-3 text-left">Plan</th>
+          <th class="px-5 py-3 text-left">Paiement</th>
+          <th class="px-5 py-3 text-left">Activité</th>
+          <th class="px-5 py-3 text-left">Inscrit le</th>
+          <th class="px-5 py-3 text-left">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800">
+      <tbody class="divide-y divide-gray-800/50">
         {% for b in businesses %}
-        <tr class="hover:bg-gray-800/50 transition-colors biz-row">
-          <td class="px-6 py-3 font-medium text-white">{{ b.name }}</td>
-          <td class="px-6 py-3 text-gray-400">{{ b.owner_email }}</td>
-          <td class="px-6 py-3">
+        <tr class="hover:bg-gray-800/40 transition-colors biz-row"
+            data-paid="{{ 'paid' if b.subscription_paid else 'unpaid' }}"
+            data-active="{{ 'active' if b.is_active else 'inactive' }}">
+          <td class="px-5 py-3.5 font-medium text-white">
+            <a href="/superadmin/business/{{ b.id }}" class="hover:text-blue-400 transition-colors">{{ b.name }}</a>
+          </td>
+          <td class="px-5 py-3.5 text-gray-400 text-xs">{{ b.owner_email }}</td>
+          <td class="px-5 py-3.5">
             <span class="px-2 py-0.5 rounded text-xs font-semibold
-              {% if b.plan == 'enterprise' %}bg-purple-900 text-purple-300
-              {% elif b.plan == 'pro' %}bg-blue-900 text-blue-300
-              {% else %}bg-gray-700 text-gray-300{% endif %}">
+              {% if b.plan == 'enterprise' %}bg-purple-900/60 text-purple-300 border border-purple-800
+              {% elif b.plan == 'pro' %}bg-blue-900/60 text-blue-300 border border-blue-800
+              {% else %}bg-gray-700/60 text-gray-300 border border-gray-600{% endif %}">
               {{ b.plan|capitalize }}
             </span>
           </td>
-          <td class="px-6 py-3">
-            {% if b.is_active %}
-              <span class="inline-flex items-center gap-1 text-green-400 text-xs">
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> Actif
+          <td class="px-5 py-3.5">
+            {% if b.subscription_paid %}
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-green-400">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Payé
               </span>
             {% else %}
-              <span class="inline-flex items-center gap-1 text-red-400 text-xs">
-                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span> Inactif
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-yellow-400">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                En attente
               </span>
             {% endif %}
           </td>
-          <td class="px-6 py-3 text-gray-400 text-xs">
+          <td class="px-5 py-3.5">
+            {% if b.is_active %}
+              <span class="inline-flex items-center gap-1 text-xs text-green-400">
+                <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> Actif
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-xs text-red-400">
+                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span> Stoppé
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5 text-gray-500 text-xs">
             {{ b.created_at.strftime('%d/%m/%Y') if b.created_at else '—' }}
           </td>
-          <td class="px-6 py-3">
-            <a href="/superadmin/business/{{ b.id }}"
-               class="text-xs text-primary hover:underline mr-3">Détail</a>
-            <form method="post" action="/superadmin/business/{{ b.id }}/toggle" class="inline">
-              <button class="text-xs {{ 'text-red-400 hover:text-red-300' if b.is_active else 'text-green-400 hover:text-green-300' }}">
-                {{ 'Désactiver' if b.is_active else 'Activer' }}
-              </button>
-            </form>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-1.5">
+              <a href="/superadmin/business/{{ b.id }}"
+                 class="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-900 hover:border-blue-700 transition-colors">Détail</a>
+              <form method="post" action="/superadmin/business/{{ b.id }}/payment" class="inline">
+                <button class="text-xs px-2 py-1 rounded border transition-colors
+                  {{ 'border-green-900 text-green-400 hover:bg-green-900/20' if b.subscription_paid else 'border-yellow-900 text-yellow-400 hover:bg-yellow-900/20' }}">
+                  {{ '✓ Payé' if b.subscription_paid else '$ Payer' }}
+                </button>
+              </form>
+              <form method="post" action="/superadmin/business/{{ b.id }}/toggle" class="inline">
+                <button class="text-xs px-2 py-1 rounded border transition-colors
+                  {{ 'border-red-900 text-red-400 hover:bg-red-900/20' if b.is_active else 'border-gray-700 text-gray-400 hover:bg-gray-700/20' }}">
+                  {{ '⛔ Stop' if b.is_active else '▶ Activer' }}
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    {% if not businesses %}
+    <div class="py-16 text-center text-gray-600">
+      <p class="text-4xl mb-3">👥</p><p>Aucun client inscrit.</p>
+    </div>
+    {% endif %}
   </div>
 </div>
 
+<style>
+  .filter-btn { background:transparent; border:1px solid #374151; color:#9ca3af; cursor:pointer; font-size:0.75rem; padding:0.375rem 1rem; border-radius:9999px; font-weight:500; transition:all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background:#2563eb; border-color:#2563eb; color:white; }
+</style>
 <script>
-function filterTable(query) {
-  const q = query.toLowerCase();
+let currentFilter = 'all';
+function filterStatus(s) {
+  currentFilter = s;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + s).classList.add('active');
+  applyFilters();
+}
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
   document.querySelectorAll('.biz-row').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    const paid = row.dataset.paid, active = row.dataset.active;
+    const matchFilter = currentFilter === 'all' ? true : currentFilter === 'paid' ? paid === 'paid' : currentFilter === 'unpaid' ? paid === 'unpaid' : active === 'inactive';
+    row.style.display = (matchFilter && (!q || row.textContent.toLowerCase().includes(q))) ? '' : 'none';
   });
 }
 </script>

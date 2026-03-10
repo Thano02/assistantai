@@ -1,0 +1,154 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Mon compte — AssistantAI{% endblock %}
+{% block page_title %}Mon compte{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ✅ Paramètres sauvegardés.
+</div>
+{% endif %}
+
+<div class="max-w-2xl space-y-6">
+
+  <!-- Infos commerce -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-5">Informations du commerce</h2>
+    <form method="post" action="/dashboard/client-settings" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom du commerce</label>
+        <input type="text" name="business_name" value="{{ business.name }}"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder
+      </button>
+    </form>
+  </div>
+
+  <!-- Voix ElevenLabs -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-start justify-between mb-5">
+      <div>
+        <h2 class="font-semibold text-gray-900">Voix de votre assistant</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Choisissez la voix que vos clients entendront</p>
+      </div>
+      <span class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded-full font-medium">ElevenLabs</span>
+    </div>
+
+    <form method="post" action="/dashboard/client-settings" class="space-y-5">
+      <!-- Voix prédéfinies -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-3">Voix populaires</label>
+        <div class="grid grid-cols-2 gap-3">
+          {% set voices = [
+            ("Sophie", "EXAVITQu4vr4xnSDxMaL", "Douce, naturelle — femme"),
+            ("Emma", "21m00Tcm4TlvDq8ikWAM", "Calme, professionnelle — femme"),
+            ("Thomas", "TxGEqnHWrfWFTfGW9XjX", "Grave, chaleureux — homme"),
+            ("Lucas", "VR6AewLTigWG4xSOukaG", "Clair, dynamique — homme"),
+            ("Clara", "MF3mGyEYCl7XYWbV9V6O", "Expressive, chaleureuse — femme"),
+            ("Marc", "pNInz6obpgDQGcFmaJgB", "Profond, rassurant — homme"),
+          ] %}
+          {% for name, voice_id, desc in voices %}
+          <label class="voice-card flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all
+            {{ 'border-primary bg-blue-50' if business.elevenlabs_voice_id == voice_id else 'border-gray-200 hover:border-gray-300' }}">
+            <input type="radio" name="voice_preset" value="{{ voice_id }}"
+              {{ 'checked' if business.elevenlabs_voice_id == voice_id }}
+              onchange="document.getElementById('custom-voice').value=''"
+              class="sr-only">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+              {{ 'bg-primary text-white' if business.elevenlabs_voice_id == voice_id else 'bg-gray-100 text-gray-600' }}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">{{ name }}</p>
+              <p class="text-xs text-gray-500">{{ desc }}</p>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Voice ID personnalisé -->
+      <div class="border-t border-gray-100 pt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+          Voice ID personnalisé
+          <span class="text-gray-400 font-normal">(optionnel — depuis votre compte ElevenLabs)</span>
+        </label>
+        <div class="flex gap-3">
+          <input id="custom-voice" type="text" name="voice_id"
+            value="{{ business.elevenlabs_voice_id if business.elevenlabs_voice_id not in ['EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','TxGEqnHWrfWFTfGW9XjX','VR6AewLTigWG4xSOukaG','MF3mGyEYCl7XYWbV9V6O','pNInz6obpgDQGcFmaJgB'] else '' }}"
+            placeholder="Collez un Voice ID ElevenLabs…"
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            oninput="document.querySelectorAll('[name=voice_preset]').forEach(r => r.checked = false)">
+          <a href="https://elevenlabs.io/voice-lab" target="_blank" rel="noopener"
+            class="flex items-center gap-1.5 text-sm text-primary border border-primary hover:bg-blue-50 px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            ElevenLabs
+          </a>
+        </div>
+        <p class="text-xs text-gray-400 mt-1.5">
+          Trouvez vos voix sur elevenlabs.io → Voice Lab → cliquez sur une voix → copiez l'ID
+        </p>
+      </div>
+
+      <button type="submit" class="w-full bg-primary hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
+        Sauvegarder ma voix
+      </button>
+    </form>
+  </div>
+
+  <!-- Infos compte (read-only) -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Informations du compte</h2>
+    <div class="space-y-3 text-sm">
+      <div class="flex items-center justify-between py-2 border-b border-gray-50">
+        <span class="text-gray-500">Email</span>
+        <span class="font-medium text-gray-900">{{ business.owner_email }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-50">
+        <span class="text-gray-500">Plan</span>
+        <span class="px-2 py-0.5 rounded text-xs font-semibold
+          {% if business.plan == 'enterprise' %}bg-purple-100 text-purple-700
+          {% elif business.plan == 'pro' %}bg-blue-100 text-blue-700
+          {% else %}bg-gray-100 text-gray-600{% endif %}">
+          {{ business.plan|capitalize }}
+        </span>
+      </div>
+      <div class="flex items-center justify-between py-2">
+        <span class="text-gray-500">Paiement</span>
+        {% if business.subscription_paid %}
+          <span class="text-green-600 font-medium text-xs">✓ Abonnement actif</span>
+        {% else %}
+          <span class="text-yellow-600 font-medium text-xs">En attente de confirmation</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Highlight selected voice card
+document.querySelectorAll('[name=voice_preset]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.voice-card').forEach(card => {
+      card.classList.remove('border-primary', 'bg-blue-50');
+      card.classList.add('border-gray-200');
+      card.querySelector('.w-9').classList.remove('bg-primary', 'text-white');
+      card.querySelector('.w-9').classList.add('bg-gray-100', 'text-gray-600');
+    });
+    const selected = radio.closest('.voice-card');
+    selected.classList.add('border-primary', 'bg-blue-50');
+    selected.classList.remove('border-gray-200');
+    selected.querySelector('.w-9').classList.add('bg-primary', 'text-white');
+    selected.querySelector('.w-9').classList.remove('bg-gray-100', 'text-gray-600');
+  });
+});
+</script>
+{% endblock %}

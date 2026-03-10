@@ -182,22 +182,68 @@ def settings_page(
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
-        from config import load_business_config
-        business_cfg = load_business_config()
+        # Superadmin → page complète ; client → page simplifiée voix uniquement
+        if business and business.is_superadmin:
+            from config import load_business_config
+            business_cfg = load_business_config()
+            return templates.TemplateResponse("settings.html", {
+                "request": request,
+                "business": business,
+                "business_cfg": business_cfg,
+                "success": success,
+                "error": error,
+                "google_connected": bool(business.google_access_token),
+                "outlook_connected": bool(business.outlook_access_token),
+                "base_url": settings.base_url,
+                "google_enabled": bool(settings.google_client_id),
+                "outlook_enabled": settings.outlook_enabled,
+                "page": "settings",
+            })
+        return RedirectResponse(url="/dashboard/client-settings", status_code=302)
+    finally:
+        db.close()
 
-        return templates.TemplateResponse("settings.html", {
+
+@router.get("/dashboard/client-settings")
+def client_settings_page(
+    request: Request,
+    success: str = Query(None),
+    business_id: int = Depends(get_current_business_id),
+):
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, business_id)
+        return templates.TemplateResponse("dashboard/client_settings.html", {
             "request": request,
             "business": business,
-            "business_cfg": business_cfg,
             "success": success,
-            "error": error,
-            "google_connected": bool(business.google_access_token),
-            "outlook_connected": bool(business.outlook_access_token),
-            "base_url": settings.base_url,
-            "google_enabled": bool(settings.google_client_id),
-            "outlook_enabled": settings.outlook_enabled,
             "page": "settings",
         })
+    finally:
+        db.close()
+
+
+@router.post("/dashboard/client-settings")
+def client_settings_save(
+    request: Request,
+    business_name: str = None,
+    voice_preset: str = None,
+    voice_id: str = None,
+    business_id: int = Depends(get_current_business_id),
+):
+    from database import update_business
+    db = SessionLocal()
+    try:
+        updates = {}
+        if business_name:
+            updates["name"] = business_name
+        # Preset a priority, then custom
+        chosen_voice = voice_preset or voice_id or None
+        if chosen_voice:
+            updates["elevenlabs_voice_id"] = chosen_voice
+        if updates:
+            update_business(db, business_id, **updates)
+        return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)
     finally:
         db.close()
 
