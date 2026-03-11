@@ -39,6 +39,8 @@ class Settings:
     stripe_publishable_key: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     stripe_price_id: str = os.getenv("STRIPE_PRICE_ID", "")
+    stripe_trial_days: int = int(os.getenv("STRIPE_TRIAL_DAYS", "7"))
+    stripe_trial_amount_cents: int = int(os.getenv("STRIPE_TRIAL_AMOUNT_CENTS", "3000"))  # 30€
 
     # ── Microsoft Azure (Outlook) ────────────────────────────────────────────
     azure_client_id: str = os.getenv("AZURE_CLIENT_ID", "")

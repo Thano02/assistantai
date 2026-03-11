@@ -123,15 +123,28 @@ async def stripe_webhook(request: Request):
             plan = session["metadata"].get("plan", "starter")
             subscription_id = session.get("subscription")
             if business_id:
-                period_end = _get_period_end_from_sub(subscription_id) if subscription_id else None
+                period_end = None
+                trial_ends_at = None
+                if subscription_id:
+                    try:
+                        sub = stripe.Subscription.retrieve(subscription_id)
+                        ts = sub.get("current_period_end")
+                        if ts:
+                            period_end = datetime.utcfromtimestamp(ts)
+                        # Si en période d'essai, current_period_end = fin du trial
+                        if sub.get("status") == "trialing":
+                            trial_ends_at = period_end
+                    except Exception:
+                        pass
                 update_business(
                     db, business_id,
                     plan=plan,
                     stripe_subscription_id=subscription_id,
                     subscription_paid=True,
                     subscription_current_period_end=period_end,
+                    trial_ends_at=trial_ends_at,
                 )
-                logger.info("[Stripe] business_id=%d activated plan=%s", business_id, plan)
+                logger.info("[Stripe] business_id=%d activated plan=%s trial=%s", business_id, plan, trial_ends_at)
 
         elif event_type == "invoice.payment_succeeded":
             invoice = event["data"]["object"]
@@ -166,9 +179,14 @@ async def stripe_webhook(request: Request):
                 status = sub.get("status")
                 ts = sub.get("current_period_end")
                 period_end = datetime.utcfromtimestamp(ts) if ts else None
-                if status in ("active", "trialing"):
+                if status == "trialing":
                     update_business(db, business.id, subscription_paid=True,
-                                    subscription_current_period_end=period_end)
+                                    subscription_current_period_end=period_end,
+                                    trial_ends_at=period_end)
+                elif status == "active":
+                    update_business(db, business.id, subscription_paid=True,
+                                    subscription_current_period_end=period_end,
+                                    trial_ends_at=None)
                 elif status in ("canceled", "unpaid", "past_due"):
                     update_business(db, business.id, subscription_paid=False,
                                     subscription_current_period_end=period_end)

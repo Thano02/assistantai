@@ -33,12 +33,20 @@
           <span class="text-gray-500 font-medium">/mois</span>
         </div>
         <p class="text-sm text-gray-500 mt-1">Toutes les fonctionnalités incluses</p>
-        {% if business.subscription_paid and business.subscription_current_period_end %}
+        {% if business.trial_ends_at %}
+        <p class="text-xs text-amber-600 font-medium mt-1">
+          ⏳ Période d'essai — expire le {{ business.trial_ends_at.strftime('%d/%m/%Y') }}
+        </p>
+        <p class="text-xs text-gray-400">Puis 300€/mois automatiquement</p>
+        {% elif business.subscription_paid and business.subscription_current_period_end %}
         <p class="text-xs text-gray-400 mt-1">Prochain prélèvement : {{ business.subscription_current_period_end.strftime('%d/%m/%Y') }}</p>
         {% endif %}
       </div>
       <div class="flex flex-col gap-2">
         {% if business.subscription_paid %}
+          {% if business.trial_ends_at %}
+          <span class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-3 py-1.5 rounded-lg font-semibold text-center">Essai 7 jours</span>
+          {% endif %}
           {% if portal_available %}
           <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center">
             Gérer l'abonnement
@@ -48,8 +56,9 @@
           {% endif %}
         {% else %}
           <a href="/stripe/subscribe/starter" class="text-sm bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors text-center">
-            S'abonner à 300€/mois →
+            Commencer — 30€ / 7 jours →
           </a>
+          <p class="text-xs text-gray-400 text-center">puis 300€/mois</p>
         {% endif %}
       </div>
     </div>
