@@ -11,7 +11,7 @@ from typing import Optional
 
 from services.ai_service import process_speech, get_welcome_message, get_session, end_session
 from services.tts_service import text_to_speech
-from database import SessionLocal, update_client_last_call, get_business_by_id
+from database import SessionLocal, update_client_last_call, get_business_by_id, get_business_by_twilio_number
 from utils import get_logger
 
 logger = get_logger(__name__)
@@ -163,6 +163,21 @@ def voice_incoming(
     From: str = Form(...),
     To: Optional[str] = Form(None),
 ):
+    # Auto-detect business from the Twilio number that was called
+    business_id = None
+    if To:
+        db = SessionLocal()
+        try:
+            business = get_business_by_twilio_number(db, To)
+            if business and business.is_active and business.subscription_paid:
+                business_id = business.id
+                logger.info("[Voice] Auto-detected business_id=%d from To=%s", business_id, To)
+        finally:
+            db.close()
+
+    if business_id:
+        process_url = f"/voice/{business_id}/process"
+        return _handle_incoming(CallSid, From, process_url, business_id)
     return _handle_incoming(CallSid, From, "/voice/process")
 
 

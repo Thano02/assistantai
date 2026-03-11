@@ -508,6 +508,11 @@ def get_business_by_id(db: Session, business_id: int) -> Business:
     return db.query(Business).filter(Business.id == business_id).first()
 
 
+def get_business_by_twilio_number(db: Session, phone_number: str) -> Business:
+    """Trouve le business par son numéro Twilio (champ To de l'appel entrant)."""
+    return db.query(Business).filter(Business.twilio_phone_number == phone_number).first()
+
+
 def create_business(
     db: Session,
     name: str,
