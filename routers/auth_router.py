@@ -65,8 +65,17 @@ def register_submit(
         if stripe_id:
             update_business(db, business.id, stripe_customer_id=stripe_id)
 
-        # Send verification email
-        send_verification_email(email, verification_token, business_name)
+        # Send verification email — si Mailgun non configuré, auto-vérifier
+        email_sent = send_verification_email(email, verification_token, business_name)
+        if not email_sent:
+            update_business(db, business.id, email_verified=True, email_verification_token=None)
+            jwt_token = create_access_token(business.id, email)
+            response = RedirectResponse(url="/dashboard", status_code=303)
+            response.set_cookie(
+                "access_token", jwt_token,
+                httponly=True, max_age=60 * 60 * 24 * 30, samesite="lax",
+            )
+            return response
 
         return RedirectResponse(url="/auth/check-email", status_code=303)
     finally:

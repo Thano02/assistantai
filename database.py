@@ -64,6 +64,9 @@ class Business(Base):
     # Paiement (géré manuellement par le superadmin)
     subscription_paid = Column(Boolean, default=True)
 
+    # Contact propriétaire
+    owner_phone = Column(String(20), nullable=True)
+
     # Profession & configuration
     profession_type = Column(String(30), default="salon")
     # "ask" = robot propose le choix | "auto" = premier disponible

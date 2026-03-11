@@ -287,9 +287,10 @@ def client_settings_page(
 @router.post("/dashboard/client-settings")
 def client_settings_save(
     request: Request,
-    business_name: str = None,
-    voice_preset: str = None,
-    voice_id: str = None,
+    business_name: str = Form(None),
+    owner_phone: str = Form(None),
+    voice_preset: str = Form(None),
+    voice_id: str = Form(None),
     business_id: int = Depends(get_current_business_id),
 ):
     from database import update_business
@@ -298,6 +299,8 @@ def client_settings_save(
         updates = {}
         if business_name:
             updates["name"] = business_name
+        if owner_phone is not None:
+            updates["owner_phone"] = owner_phone.strip() or None
         # Preset a priority, then custom
         chosen_voice = voice_preset or voice_id or None
         if chosen_voice:
