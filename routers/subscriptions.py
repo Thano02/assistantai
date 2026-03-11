@@ -3,18 +3,25 @@ Routes Stripe : checkout, webhooks, portail client.
 """
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
+from datetime import datetime
 import stripe
 
 from config import settings
-from database import SessionLocal, get_business_by_id, update_business
+from database import SessionLocal, get_business_by_id, update_business, Business
 from services.stripe_service import (
     create_checkout_session,
     get_customer_portal_url,
     construct_webhook_event,
 )
 from services.auth_service import get_current_business_id
+from utils import get_logger
 
+logger = get_logger(__name__)
 router = APIRouter()
+
+
+def _get_business_by_customer(db, customer_id: str):
+    return db.query(Business).filter(Business.stripe_customer_id == customer_id).first()
 
 
 @router.get("/subscribe/{plan}")
@@ -23,7 +30,6 @@ def subscribe(
     request: Request,
     business_id: int = Depends(get_current_business_id),
 ):
-    """Redirige vers Stripe Checkout pour souscrire à un plan."""
     if plan not in ("starter", "pro", "enterprise"):
         raise HTTPException(status_code=400, detail="Plan invalide")
 
@@ -34,7 +40,7 @@ def subscribe(
             raise HTTPException(status_code=404)
 
         success_url = f"{settings.base_url}/dashboard/billing?success=1"
-        cancel_url = f"{settings.base_url}/pricing"
+        cancel_url = f"{settings.base_url}/dashboard/billing"
 
         checkout_url = create_checkout_session(
             business.stripe_customer_id,
@@ -45,8 +51,7 @@ def subscribe(
         )
 
         if not checkout_url:
-            # Stripe non configuré → passer directement en mode test
-            update_business(db, business_id, plan=plan)
+            logger.warning("Stripe not configured")
             return RedirectResponse(url="/dashboard/billing?success=1", status_code=303)
 
         return RedirectResponse(url=checkout_url, status_code=303)
@@ -59,7 +64,6 @@ def customer_portal(
     request: Request,
     business_id: int = Depends(get_current_business_id),
 ):
-    """Redirige vers le portail client Stripe."""
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
@@ -77,9 +81,19 @@ def customer_portal(
         db.close()
 
 
+def _get_period_end_from_sub(subscription_id: str):
+    try:
+        sub = stripe.Subscription.retrieve(subscription_id)
+        ts = sub.get("current_period_end")
+        if ts:
+            return datetime.utcfromtimestamp(ts)
+    except Exception:
+        pass
+    return None
+
+
 @router.post("/webhook")
 async def stripe_webhook(request: Request):
-    """Webhook Stripe pour les événements de paiement."""
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
@@ -90,46 +104,77 @@ async def stripe_webhook(request: Request):
     except stripe.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Signature invalide")
 
+    event_type = event["type"]
+    logger.info("[Stripe webhook] event=%s", event_type)
+
     db = SessionLocal()
     try:
-        if event["type"] == "checkout.session.completed":
+        if event_type == "checkout.session.completed":
             session = event["data"]["object"]
             business_id = int(session["metadata"].get("business_id", 0))
             plan = session["metadata"].get("plan", "starter")
             subscription_id = session.get("subscription")
             if business_id:
+                period_end = _get_period_end_from_sub(subscription_id) if subscription_id else None
                 update_business(
                     db, business_id,
                     plan=plan,
                     stripe_subscription_id=subscription_id,
                     subscription_paid=True,
+                    subscription_current_period_end=period_end,
                 )
+                logger.info("[Stripe] business_id=%d activated plan=%s", business_id, plan)
 
-        elif event["type"] == "customer.subscription.updated":
+        elif event_type == "invoice.payment_succeeded":
+            invoice = event["data"]["object"]
+            customer_id = invoice.get("customer")
+            billing_reason = invoice.get("billing_reason", "")
+            if customer_id and billing_reason in ("subscription_cycle", "subscription_create"):
+                business = _get_business_by_customer(db, customer_id)
+                if business:
+                    sub_id = invoice.get("subscription")
+                    period_end = _get_period_end_from_sub(sub_id) if sub_id else None
+                    update_business(
+                        db, business.id,
+                        subscription_paid=True,
+                        subscription_current_period_end=period_end,
+                    )
+                    logger.info("[Stripe] business_id=%d renewed reason=%s", business.id, billing_reason)
+
+        elif event_type == "invoice.payment_failed":
+            invoice = event["data"]["object"]
+            customer_id = invoice.get("customer")
+            if customer_id:
+                business = _get_business_by_customer(db, customer_id)
+                if business:
+                    update_business(db, business.id, subscription_paid=False)
+                    logger.warning("[Stripe] business_id=%d payment FAILED blocked", business.id)
+
+        elif event_type == "customer.subscription.updated":
             sub = event["data"]["object"]
             customer_id = sub["customer"]
-            from database import Business
-            business = db.query(Business).filter(
-                Business.stripe_customer_id == customer_id
-            ).first()
+            business = _get_business_by_customer(db, customer_id)
             if business:
                 status = sub.get("status")
+                ts = sub.get("current_period_end")
+                period_end = datetime.utcfromtimestamp(ts) if ts else None
                 if status in ("active", "trialing"):
-                    update_business(db, business.id, subscription_paid=True)
-                elif status == "canceled":
-                    update_business(db, business.id, subscription_paid=False)
+                    update_business(db, business.id, subscription_paid=True,
+                                    subscription_current_period_end=period_end)
+                elif status in ("canceled", "unpaid", "past_due"):
+                    update_business(db, business.id, subscription_paid=False,
+                                    subscription_current_period_end=period_end)
+                logger.info("[Stripe] business_id=%d status=%s", business.id, status)
 
-        elif event["type"] == "invoice.payment_succeeded":
-            invoice = event["data"]["object"]
-            business_id_str = invoice.get("metadata", {}).get("business_id")
-            if business_id_str:
-                from database import MonthlyInvoice
-                inv = db.query(MonthlyInvoice).filter(
-                    MonthlyInvoice.stripe_invoice_id == invoice["id"]
-                ).first()
-                if inv:
-                    inv.status = "paid"
-                    db.commit()
+        elif event_type == "customer.subscription.deleted":
+            sub = event["data"]["object"]
+            customer_id = sub["customer"]
+            business = _get_business_by_customer(db, customer_id)
+            if business:
+                update_business(db, business.id, subscription_paid=False,
+                                stripe_subscription_id=None,
+                                subscription_current_period_end=None)
+                logger.warning("[Stripe] business_id=%d subscription DELETED", business.id)
 
     finally:
         db.close()

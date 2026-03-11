@@ -63,6 +63,7 @@ class Business(Base):
 
     # Paiement (géré via Stripe ou manuellement par le superadmin)
     subscription_paid = Column(Boolean, default=False)
+    subscription_current_period_end = Column(DateTime, nullable=True)
 
     # Contact propriétaire
     owner_phone = Column(String(20), nullable=True)
@@ -216,6 +217,7 @@ def _run_migrations():
     migrations = [
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_phone VARCHAR(20)",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ai_description TEXT",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_current_period_end TIMESTAMP",
     ]
     with engine.connect() as conn:
         for sql in migrations:

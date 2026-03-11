@@ -28,6 +28,9 @@
           <span class="text-gray-500 font-medium">/mois</span>
         </div>
         <p class="text-sm text-gray-500 mt-1">Toutes les fonctionnalités incluses</p>
+        {% if business.subscription_paid and business.subscription_current_period_end %}
+        <p class="text-xs text-gray-400 mt-1">Prochain prélèvement : {{ business.subscription_current_period_end.strftime('%d/%m/%Y') }}</p>
+        {% endif %}
       </div>
       <div class="flex flex-col gap-2">
         {% if business.subscription_paid %}
@@ -40,7 +43,7 @@
           {% endif %}
         {% else %}
           <a href="/stripe/subscribe/starter" class="text-sm bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors text-center">
-            S'abonner à 300€/mois
+            S'abonner à 300€/mois →
           </a>
         {% endif %}
       </div>
