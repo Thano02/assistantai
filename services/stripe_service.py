@@ -8,6 +8,9 @@ except ImportError:
     stripe = None  # type: ignore
 from typing import Optional
 from config import settings
+from utils import get_logger
+
+logger = get_logger(__name__)
 
 if stripe:
     stripe.api_key = settings.stripe_secret_key
@@ -24,7 +27,7 @@ def create_stripe_customer(email: str, business_name: str) -> Optional[str]:
         )
         return customer.id
     except stripe.StripeError as e:
-        print(f"[Stripe] Erreur création customer: {e}")
+        logger.error("[Stripe] Erreur création customer: %s", e)
         return None
 
 
@@ -42,11 +45,11 @@ def create_checkout_session(
 ) -> Optional[str]:
     """Crée une session Stripe Checkout pour l'abonnement. Retourne l'URL de paiement."""
     if not settings.stripe_enabled:
-        print("[Stripe] stripe_enabled=False (STRIPE_SECRET_KEY manquant)", flush=True)
+        logger.warning("[Stripe] stripe_enabled=False (STRIPE_SECRET_KEY manquant)")
         return None
     price_id = _resolve_price_id()
     if not price_id:
-        print("[Stripe] STRIPE_PRICE_ID non configuré", flush=True)
+        logger.warning("[Stripe] STRIPE_PRICE_ID non configuré")
         return None
     try:
         params = dict(
@@ -73,11 +76,12 @@ def create_checkout_session(
         )
         if customer_id:
             params["customer"] = customer_id
-        print(f"[Stripe] Creating checkout: customer={customer_id!r} price={price_id!r} trial={settings.stripe_trial_days}d trial_amount={settings.stripe_trial_amount_cents}c", flush=True)
+        logger.info("[Stripe] Creating checkout: customer=%r price=%r trial=%dd amount=%dc",
+                    customer_id, price_id, settings.stripe_trial_days, settings.stripe_trial_amount_cents)
         session = stripe.checkout.Session.create(**params)
         return session.url
     except stripe.StripeError as e:
-        print(f"[Stripe] ERREUR checkout: {e}", flush=True)
+        logger.error("[Stripe] ERREUR checkout: %s", e)
         return None
 
 
@@ -124,7 +128,7 @@ def create_monthly_invoice(
         return finalized.id
 
     except stripe.StripeError as e:
-        print(f"[Stripe] Erreur création invoice: {e}")
+        logger.error("[Stripe] Erreur création invoice: %s", e)
         return None
 
 
@@ -139,7 +143,7 @@ def get_customer_portal_url(customer_id: str, return_url: str) -> Optional[str]:
         )
         return session.url
     except stripe.StripeError as e:
-        print(f"[Stripe] Erreur portail client: {e}")
+        logger.error("[Stripe] Erreur portail client: %s", e)
         return None
 
 

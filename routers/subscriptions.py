@@ -119,10 +119,16 @@ async def stripe_webhook(request: Request):
     try:
         if event_type == "checkout.session.completed":
             session = event["data"]["object"]
-            business_id = int(session["metadata"].get("business_id", 0))
+            try:
+                business_id = int(session["metadata"].get("business_id", 0))
+            except (TypeError, ValueError):
+                business_id = 0
             plan = session["metadata"].get("plan", "starter")
+            if plan not in ("starter", "pro"):
+                plan = "starter"
             subscription_id = session.get("subscription")
-            if business_id:
+            # Verify business exists before updating
+            if business_id and db.query(Business).filter(Business.id == business_id).first():
                 period_end = None
                 trial_ends_at = None
                 if subscription_id:

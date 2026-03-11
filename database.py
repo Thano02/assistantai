@@ -425,7 +425,10 @@ def get_available_tables(
     party_size: int,
     duration_minutes: int = 90,
 ) -> list:
-    """Retourne les tables actives pouvant accueillir party_size au créneau dt."""
+    """Retourne les tables actives pouvant accueillir party_size au créneau dt.
+
+    Uses 2 queries instead of N+1: one for tables, one for all conflicting reservations.
+    """
     from datetime import timedelta
     req_end = dt + timedelta(minutes=duration_minutes)
 
@@ -433,24 +436,27 @@ def get_available_tables(
               .filter(RestaurantTable.business_id == business_id,
                       RestaurantTable.capacity >= party_size,
                       RestaurantTable.is_active == True)
-              .order_by(RestaurantTable.capacity)  # table la plus petite adaptée en premier
+              .order_by(RestaurantTable.capacity)
               .all())
 
-    available = []
-    for table in tables:
-        # Vérifie s'il existe une réservation qui chevauche le créneau demandé
-        conflict = (db.query(Reservation)
-                    .filter(Reservation.table_id == table.id,
-                            Reservation.status == ReservationStatus.CONFIRMED)
-                    .all())
-        has_conflict = any(
-            r.appointment_dt < req_end and
-            r.appointment_dt + timedelta(minutes=r.duration_minutes) > dt
-            for r in conflict
-        )
-        if not has_conflict:
-            available.append(table)
-    return available
+    if not tables:
+        return []
+
+    table_ids = [t.id for t in tables]
+
+    # Fetch all potentially conflicting reservations in one query
+    conflict_rows = (db.query(Reservation)
+                     .filter(Reservation.table_id.in_(table_ids),
+                             Reservation.status == ReservationStatus.CONFIRMED,
+                             Reservation.appointment_dt < req_end)
+                     .all())
+
+    busy_ids = {
+        r.table_id for r in conflict_rows
+        if r.appointment_dt + timedelta(minutes=r.duration_minutes) > dt
+    }
+
+    return [t for t in tables if t.id not in busy_ids]
 
 
 def get_table_reservations_today(db: Session, business_id: int) -> list:

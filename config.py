@@ -30,7 +30,7 @@ class Settings:
     google_client_secret: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
     # ── Auth JWT ─────────────────────────────────────────────────────────────
-    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "change-me-in-production-please")
+    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "")
     jwt_algorithm: str = "HS256"
     jwt_expire_days: int = 30
 
@@ -54,7 +54,7 @@ class Settings:
     from_name: str = os.getenv("FROM_NAME", "AssistantAI")
 
     # ── Admin ────────────────────────────────────────────────────────────────
-    admin_api_key: str = os.getenv("ADMIN_API_KEY", "change_me_in_env")
+    admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
 
     # ── Tarifs des plans ─────────────────────────────────────────────────────
     plan_prices: dict = {"starter": 300.0, "pro": 300.0, "enterprise": 300.0}
@@ -84,6 +84,12 @@ class Settings:
 
 
 settings = Settings()
+
+# Fail fast on missing critical secrets
+if not settings.jwt_secret_key:
+    raise RuntimeError("JWT_SECRET_KEY environment variable is required")
+if not settings.admin_api_key:
+    raise RuntimeError("ADMIN_API_KEY environment variable is required")
 
 
 def load_business_config() -> dict:

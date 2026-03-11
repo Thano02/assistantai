@@ -42,6 +42,7 @@ client_ai = OpenAI(api_key=settings.openai_api_key)
 
 # ── Sessions en mémoire (call_sid → ConversationSession) ──────────────────
 _sessions: dict[str, "ConversationSession"] = {}
+_SESSION_TTL_SECONDS = 3600  # 1 heure max par appel
 
 
 class ConversationSession:
@@ -51,11 +52,12 @@ class ConversationSession:
         self.business_id = business_id
         self.messages: list[dict] = []
         self.should_hangup = False
-        self.pending_reservation: Optional[dict] = None
-        self.reservation_info: Optional[dict] = None  # for email summary
+        self.reservation_info: Optional[dict] = None
+        self.created_at: float = __import__('time').time()
 
 
 def get_session(call_sid: str, caller_phone: str, business_id: int | None = None) -> ConversationSession:
+    _evict_stale_sessions()
     if call_sid not in _sessions:
         _sessions[call_sid] = ConversationSession(call_sid, caller_phone, business_id)
     return _sessions[call_sid]
@@ -63,6 +65,16 @@ def get_session(call_sid: str, caller_phone: str, business_id: int | None = None
 
 def end_session(call_sid: str):
     _sessions.pop(call_sid, None)
+
+
+def _evict_stale_sessions():
+    """Remove sessions older than TTL to prevent memory leaks."""
+    import time
+    now = time.time()
+    stale = [sid for sid, s in _sessions.items() if now - s.created_at > _SESSION_TTL_SECONDS]
+    for sid in stale:
+        logger.info("Evicting stale session %s", sid)
+        _sessions.pop(sid, None)
 
 
 # ── Prompt système ─────────────────────────────────────────────────────────
