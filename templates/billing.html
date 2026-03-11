@@ -9,6 +9,13 @@
 </div>
 {% endif %}
 
+{% if not business.subscription_paid %}
+<div class="bg-amber-50 border border-amber-300 text-amber-800 px-5 py-4 rounded-xl mb-6">
+  <p class="font-semibold mb-1">⚠️ Abonnement requis pour accéder au service</p>
+  <p class="text-sm">Souscrivez à l'abonnement ci-dessous pour activer votre assistant vocal et accéder à toutes les fonctionnalités.</p>
+</div>
+{% endif %}
+
 <div class="max-w-3xl space-y-6">
 
   <!-- Plan actuel -->

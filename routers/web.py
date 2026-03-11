@@ -25,9 +25,9 @@ templates = Jinja2Templates(directory="templates")
 
 
 def _check_subscription(business):
-    """Redirect clients with unpaid subscription to /suspended."""
+    """Redirect clients with unpaid subscription to billing."""
     if business and not business.is_superadmin and not business.subscription_paid:
-        return RedirectResponse(url="/suspended", status_code=303)
+        return RedirectResponse(url="/dashboard/billing", status_code=303)
     return None
 
 
@@ -495,9 +495,6 @@ def billing_page(
     db = SessionLocal()
     try:
         business = get_business_by_id(db, business_id)
-        gate = _check_subscription(business)
-        if gate:
-            return gate
         tz = pytz.timezone(settings.timezone)
         now = datetime.now(tz)
 

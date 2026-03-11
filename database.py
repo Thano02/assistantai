@@ -61,8 +61,8 @@ class Business(Base):
     email_verified = Column(Boolean, default=False)
     email_verification_token = Column(String(100), nullable=True)
 
-    # Paiement (géré manuellement par le superadmin)
-    subscription_paid = Column(Boolean, default=True)
+    # Paiement (géré via Stripe ou manuellement par le superadmin)
+    subscription_paid = Column(Boolean, default=False)
 
     # Contact propriétaire
     owner_phone = Column(String(20), nullable=True)
