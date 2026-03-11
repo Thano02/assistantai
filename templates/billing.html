@@ -15,22 +15,27 @@
   <div class="bg-white rounded-xl border border-gray-200 p-6">
     <div class="flex items-start justify-between">
       <div>
-        <h2 class="font-semibold text-gray-900 mb-1">Plan actuel</h2>
+        <h2 class="font-semibold text-gray-900 mb-1">Abonnement AssistantAI</h2>
         <div class="flex items-center gap-3 mt-2">
-          <span class="text-2xl font-bold text-gray-900">{{ business.plan|capitalize }}</span>
-          <span class="text-xl font-semibold text-primary">{{ plan_price }}€/mois</span>
+          <span class="text-3xl font-extrabold text-gray-900">300€</span>
+          <span class="text-gray-500 font-medium">/mois</span>
         </div>
-        <p class="text-sm text-gray-500 mt-1">+ consommation API × 1.70 facturée en fin de mois</p>
+        <p class="text-sm text-gray-500 mt-1">Toutes les fonctionnalités incluses</p>
       </div>
       <div class="flex flex-col gap-2">
-        {% if portal_available %}
-        <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center">
-          Gérer l'abonnement
-        </a>
+        {% if business.subscription_paid %}
+          {% if portal_available %}
+          <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center">
+            Gérer l'abonnement
+          </a>
+          {% else %}
+          <span class="text-sm text-green-600 font-semibold px-4 py-2">✓ Actif</span>
+          {% endif %}
+        {% else %}
+          <a href="/stripe/subscribe/starter" class="text-sm bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors text-center">
+            S'abonner à 300€/mois
+          </a>
         {% endif %}
-        <a href="/pricing" class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors text-center">
-          Changer de plan
-        </a>
       </div>
     </div>
   </div>
@@ -96,27 +101,6 @@
   </div>
   {% endif %}
 
-  <!-- Changer de plan -->
-  <div class="bg-white rounded-xl border border-gray-200 p-6">
-    <h2 class="font-semibold text-gray-900 mb-4">Changer de plan</h2>
-    <div class="grid grid-cols-3 gap-4">
-      {% for plan, price, desc in [("starter", "29€/mois", "Petits commerces"), ("pro", "79€/mois", "Commerces actifs"), ("enterprise", "199€/mois", "Illimité")] %}
-      <div class="border-2 rounded-xl p-4 text-center {{ 'border-primary bg-blue-50' if plan == business.plan else 'border-gray-200' }}">
-        <p class="font-bold text-gray-900 text-sm">{{ plan|capitalize }}</p>
-        <p class="text-primary font-semibold text-sm mt-1">{{ price }}</p>
-        <p class="text-gray-400 text-xs mt-1 mb-3">{{ desc }}</p>
-        {% if plan != business.plan %}
-        <a href="/stripe/subscribe/{{ plan }}"
-          class="block text-xs bg-primary hover:bg-blue-700 text-white py-1.5 rounded-lg transition-colors">
-          Choisir
-        </a>
-        {% else %}
-        <span class="block text-xs text-primary font-medium py-1.5">Plan actuel</span>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </div>
 
 </div>
 {% endblock %}

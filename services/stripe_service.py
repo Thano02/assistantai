@@ -35,6 +35,21 @@ def create_stripe_customer(email: str, business_name: str) -> Optional[str]:
         return None
 
 
+def _resolve_price_id(plan: str) -> Optional[str]:
+    """Résout le price_id via lookup_key (prioritaire) ou env var."""
+    # 1. Essayer lookup_key
+    lookup_key = settings.stripe_price_lookup_key
+    if lookup_key:
+        try:
+            prices = stripe.Price.list(lookup_keys=[lookup_key], limit=1)
+            if prices.data:
+                return prices.data[0].id
+        except stripe.StripeError:
+            pass
+    # 2. Fallback env var
+    return PLAN_PRICE_IDS.get(plan) or None
+
+
 def create_checkout_session(
     customer_id: str,
     plan: str,
@@ -45,7 +60,7 @@ def create_checkout_session(
     """Crée une session Stripe Checkout pour l'abonnement. Retourne l'URL de paiement."""
     if not settings.stripe_enabled:
         return None
-    price_id = PLAN_PRICE_IDS.get(plan)
+    price_id = _resolve_price_id(plan)
     if not price_id:
         return None
     try:

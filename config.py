@@ -38,6 +38,7 @@ class Settings:
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
     stripe_publishable_key: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    stripe_price_lookup_key: str = os.getenv("STRIPE_PRICE_LOOKUP_KEY", "assistantai_pro")
     stripe_price_starter: str = os.getenv("STRIPE_PRICE_STARTER", "")
     stripe_price_pro: str = os.getenv("STRIPE_PRICE_PRO", "")
     stripe_price_enterprise: str = os.getenv("STRIPE_PRICE_ENTERPRISE", "")
