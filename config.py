@@ -19,7 +19,7 @@ class Settings:
     elevenlabs_voice_id: str = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
 
     # ── Serveur ──────────────────────────────────────────────────────────────
-    base_url: str = os.getenv("BASE_URL", "http://localhost:8000")
+    base_url: str = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./robot_rdv.db")
     timezone: str = os.getenv("TIMEZONE", "Europe/Paris")
 
