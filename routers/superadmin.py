@@ -135,7 +135,7 @@ def superadmin_change_plan(
     plan: str = Form(...),
     admin_id: int = Depends(require_superadmin),
 ):
-    if plan not in ("starter", "pro", "enterprise"):
+    if plan not in ("starter", "pro"):
         return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
     db = SessionLocal()
     try:

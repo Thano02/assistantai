@@ -84,9 +84,8 @@
     <h2 class="font-semibold mb-4">Changer le plan</h2>
     <form method="post" action="/superadmin/business/{{ business.id }}/plan" class="flex gap-3 items-end">
       <select name="plan" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
-        {% for p in ['starter', 'pro', 'enterprise'] %}
-        <option value="{{ p }}" {{ 'selected' if p == business.plan }}>{{ p|capitalize }}</option>
-        {% endfor %}
+        <option value="starter" {{ 'selected' if business.plan == 'starter' }}>Starter — essai 30€</option>
+        <option value="pro" {{ 'selected' if business.plan in ('pro', 'enterprise') }}>Pro Entreprise — 300€/mois</option>
       </select>
       <button class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
         Appliquer
