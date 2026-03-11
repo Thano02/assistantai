@@ -165,10 +165,19 @@ def voice_incoming(
 ):
     # Auto-detect business from the Twilio number that was called
     business_id = None
+    logger.info("[Voice] incoming call From=%s To=%s", From, To)
     if To:
         db = SessionLocal()
         try:
+            # Log all stored numbers for debug
+            from database import Business as _B
+            stored = [(b.id, b.name, b.twilio_phone_number) for b in db.query(_B).filter(_B.twilio_phone_number.isnot(None)).all()]
+            logger.info("[Voice] stored twilio numbers: %s", stored)
             business = get_business_by_twilio_number(db, To)
+            if business:
+                logger.info("[Voice] found business id=%d name=%s active=%s paid=%s", business.id, business.name, business.is_active, business.subscription_paid)
+            else:
+                logger.warning("[Voice] no business found for To=%s", To)
             if business and business.is_active and business.subscription_paid:
                 business_id = business.id
                 logger.info("[Voice] Auto-detected business_id=%d from To=%s", business_id, To)
