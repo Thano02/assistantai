@@ -92,6 +92,41 @@
   </div>
 </section>
 
+<!-- Essayez en 30 secondes -->
+<section class="bg-gray-900 border-b border-gray-800 py-16">
+  <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-2xl font-bold text-white mb-2">Essayez en 30 secondes</h2>
+    <p class="text-gray-400 text-sm mb-6">Entrez votre numéro et notre assistant IA vous appelle immédiatement pour se présenter.</p>
+    <div class="flex gap-3">
+      <input id="demo-phone" type="tel" placeholder="+33 6 12 34 56 78"
+        class="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500">
+      <button onclick="startDemoCall()"
+        class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap">
+        Recevoir l'appel
+      </button>
+    </div>
+    <p id="demo-msg" class="text-sm mt-3 hidden"></p>
+  </div>
+</section>
+<script>
+async function startDemoCall() {
+  const phone = document.getElementById('demo-phone').value.trim();
+  const msg = document.getElementById('demo-msg');
+  if (!phone) { msg.textContent = 'Veuillez entrer votre numéro.'; msg.className = 'text-sm mt-3 text-red-400'; msg.classList.remove('hidden'); return; }
+  msg.textContent = 'Appel en cours…'; msg.className = 'text-sm mt-3 text-gray-400'; msg.classList.remove('hidden');
+  try {
+    const form = new FormData(); form.append('phone', phone);
+    const res = await fetch('/demo/call', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      msg.textContent = '✅ ' + data.message; msg.className = 'text-sm mt-3 text-green-400';
+    } else {
+      msg.textContent = '❌ ' + data.message; msg.className = 'text-sm mt-3 text-red-400';
+    }
+  } catch(e) { msg.textContent = 'Erreur réseau.'; msg.className = 'text-sm mt-3 text-red-400'; }
+}
+</script>
+
 <!-- Stats -->
 <section class="bg-gray-900 border-y border-gray-800 py-12">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">

@@ -43,40 +43,6 @@
       </a>
     </div>
 
-    <!-- Demo call -->
-    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 max-w-lg mx-auto">
-      <h2 class="text-xl font-bold text-gray-900 mb-2">Essayez en 30 secondes</h2>
-      <p class="text-gray-500 text-sm mb-5">Entrez votre numéro et notre assistant IA vous appelle immédiatement pour se présenter.</p>
-      <div class="flex gap-3">
-        <input id="demo-phone" type="tel" placeholder="+33 6 12 34 56 78"
-          class="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-        <button onclick="startDemoCall()"
-          class="bg-primary hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap">
-          Recevoir l'appel
-        </button>
-      </div>
-      <p id="demo-msg" class="text-sm mt-3 hidden"></p>
-    </div>
-
   </div>
 </section>
-
-<script>
-async function startDemoCall() {
-  const phone = document.getElementById('demo-phone').value.trim();
-  const msg = document.getElementById('demo-msg');
-  if (!phone) { msg.textContent = 'Veuillez entrer votre numéro.'; msg.className = 'text-sm mt-3 text-red-500'; msg.classList.remove('hidden'); return; }
-  msg.textContent = 'Appel en cours…'; msg.className = 'text-sm mt-3 text-gray-500'; msg.classList.remove('hidden');
-  try {
-    const form = new FormData(); form.append('phone', phone);
-    const res = await fetch('/demo/call', { method: 'POST', body: form });
-    const data = await res.json();
-    if (data.status === 'ok') {
-      msg.textContent = '✅ ' + data.message; msg.className = 'text-sm mt-3 text-green-600';
-    } else {
-      msg.textContent = '❌ ' + data.message; msg.className = 'text-sm mt-3 text-red-500';
-    }
-  } catch(e) { msg.textContent = 'Erreur réseau.'; msg.className = 'text-sm mt-3 text-red-500'; }
-}
-</script>
 {% endblock %}
