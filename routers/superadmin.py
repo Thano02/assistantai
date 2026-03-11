@@ -118,6 +118,17 @@ def superadmin_toggle_payment(bid: int, admin_id: int = Depends(require_superadm
     return RedirectResponse(url="/superadmin/dashboard", status_code=303)
 
 
+@router.post("/business/{bid}/verify-email")
+def superadmin_verify_email(bid: int, admin_id: int = Depends(require_superadmin)):
+    db = SessionLocal()
+    try:
+        update_business(db, bid, email_verified=True, email_verification_token=None)
+        logger.info("Superadmin force-verified email for business %d", bid)
+    finally:
+        db.close()
+    return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
+
+
 @router.post("/business/{bid}/plan")
 def superadmin_change_plan(
     bid: int,

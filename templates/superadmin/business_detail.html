@@ -66,6 +66,19 @@
     </form>
   </div>
 
+  <!-- Vérification email -->
+  {% if not business.email_verified %}
+  <div class="bg-gray-900 border border-yellow-700 rounded-xl p-6">
+    <h2 class="font-semibold mb-4 text-yellow-400">Email non vérifié</h2>
+    <p class="text-sm text-gray-400 mb-4">L'utilisateur ne peut pas se connecter tant que son email n'est pas vérifié.</p>
+    <form method="post" action="/superadmin/business/{{ business.id }}/verify-email">
+      <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Forcer la vérification
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
   <!-- Changer plan -->
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
     <h2 class="font-semibold mb-4">Changer le plan</h2>
