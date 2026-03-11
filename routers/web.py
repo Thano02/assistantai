@@ -274,10 +274,20 @@ def client_settings_page(
         gate = _check_subscription(business)
         if gate:
             return gate
+        guillaume_id = settings.elevenlabs_voice_id
+        preset_voices = [
+            ("Guillaume", guillaume_id, "Naturel, professionnel — homme"),
+            ("Audrey", "McVZB9hVxVSk3Equu8EH", "Douce, chaleureuse — femme"),
+            ("Koraly", "MNKK2Wl2wbbsEPQTHZGt", "Claire, expressive — femme"),
+            ("Anthony", "1EmYoP3UnnnwhlJKovEy", "Grave, rassurant — homme"),
+        ]
+        preset_voice_ids = [v[1] for v in preset_voices]
         return templates.TemplateResponse("dashboard/client_settings.html", {
             "request": request,
             "business": business,
             "success": success,
+            "preset_voices": preset_voices,
+            "preset_voice_ids": preset_voice_ids,
             "page": "settings",
         })
     finally:

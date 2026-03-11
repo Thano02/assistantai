@@ -47,12 +47,7 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-3">Voix populaires</label>
         <div class="grid grid-cols-2 gap-3">
-          {% set voices = [
-            ("Sophie", "EXAVITQu4vr4xnSDxMaL", "Douce, naturelle — femme"),
-            ("Emma", "21m00Tcm4TlvDq8ikWAM", "Calme, professionnelle — femme"),
-            ("Thomas", "TxGEqnHWrfWFTfGW9XjX", "Grave, chaleureux — homme"),
-            ("Marc", "pNInz6obpgDQGcFmaJgB", "Profond, rassurant — homme"),
-          ] %}
+          {% set voices = preset_voices %}
           {% for name, voice_id, desc in voices %}
           <label class="voice-card flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all
             {{ 'border-primary bg-blue-50' if business.elevenlabs_voice_id == voice_id else 'border-gray-200 hover:border-gray-300' }}">
@@ -84,7 +79,7 @@
         </label>
         <div class="flex gap-3">
           <input id="custom-voice" type="text" name="voice_id"
-            value="{{ business.elevenlabs_voice_id if business.elevenlabs_voice_id not in ['EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','TxGEqnHWrfWFTfGW9XjX','pNInz6obpgDQGcFmaJgB'] else '' }}"
+            value="{{ business.elevenlabs_voice_id if business.elevenlabs_voice_id not in preset_voice_ids else '' }}"
             placeholder="Collez un Voice ID ElevenLabs…"
             class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             oninput="document.querySelectorAll('[name=voice_preset]').forEach(r => r.checked = false)">

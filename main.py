@@ -9,7 +9,7 @@ from database import init_db
 from services.scheduler_service import start_scheduler, stop_scheduler
 from routers import voice, sms_webhook, admin
 from routers import web, auth_router, calendar_api
-from routers import superadmin, employees
+from routers import superadmin, employees, subscriptions, demo
 
 
 def _create_superadmin_if_needed():
@@ -73,10 +73,11 @@ app.include_router(admin.router, prefix="/admin", tags=["admin"])
 # ── Web dashboard ────────────────────────────────────────────────────────────
 app.include_router(web.router, tags=["web"])
 app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
-# app.include_router(subscriptions.router, prefix="/stripe", tags=["stripe"])  # Stripe désactivé
+app.include_router(subscriptions.router, prefix="/stripe", tags=["stripe"])
 app.include_router(calendar_api.router, prefix="/api/calendar", tags=["calendar-api"])
 app.include_router(superadmin.router, prefix="/superadmin", tags=["superadmin"])
 app.include_router(employees.router, tags=["employees"])
+app.include_router(demo.router, prefix="/demo", tags=["demo"])
 
 
 @app.get("/health")

@@ -23,9 +23,21 @@ GATHER_SPEECH_TIMEOUT = 2
 
 # ── TwiML helpers ──────────────────────────────────────────────────────────────
 
-def _twiml_response(text: str, action_url: str) -> str:
+def _get_voice_id(business_id: int | None) -> str | None:
+    """Retourne le voice_id ElevenLabs du business, ou None pour utiliser le global."""
+    if not business_id:
+        return None
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, business_id)
+        return business.elevenlabs_voice_id if business else None
+    finally:
+        db.close()
+
+
+def _twiml_response(text: str, action_url: str, voice_id: str = None) -> str:
     """TwiML avec audio ElevenLabs + Gather pour la prochaine parole."""
-    audio_url = text_to_speech(text)
+    audio_url = text_to_speech(text, voice_id)
     response = VoiceResponse()
     gather = Gather(
         input="speech",
@@ -43,9 +55,9 @@ def _twiml_response(text: str, action_url: str) -> str:
     return str(response)
 
 
-def _twiml_hangup(text: str) -> str:
+def _twiml_hangup(text: str, voice_id: str = None) -> str:
     """TwiML avec message d'au revoir puis raccroche."""
-    audio_url = text_to_speech(text)
+    audio_url = text_to_speech(text, voice_id)
     response = VoiceResponse()
     response.play(audio_url)
     response.hangup()
@@ -66,26 +78,30 @@ def _twiml_unavailable() -> str:
 
 def _handle_incoming(call_sid: str, caller_phone: str, base_process_url: str,
                      business_id: int | None = None) -> Response:
+    voice_id = None
     db = SessionLocal()
     try:
         if business_id:
             business = get_business_by_id(db, business_id)
             if not business or not business.is_active:
                 return Response(content=_twiml_unavailable(), media_type="application/xml")
+            voice_id = business.elevenlabs_voice_id
         update_client_last_call(db, caller_phone)
     finally:
         db.close()
 
     welcome_text = get_welcome_message(caller_phone, business_id)
-    twiml = _twiml_response(welcome_text, base_process_url)
+    twiml = _twiml_response(welcome_text, base_process_url, voice_id)
     return Response(content=twiml, media_type="application/xml")
 
 
 def _handle_process(call_sid: str, caller_phone: str, speech: str,
                     process_url: str, no_input_url: str,
                     business_id: int | None = None) -> Response:
+    voice_id = _get_voice_id(business_id)
+
     if not speech:
-        audio_url = text_to_speech("Je n'ai pas entendu votre réponse. Pouvez-vous répéter ?")
+        audio_url = text_to_speech("Je n'ai pas entendu votre réponse. Pouvez-vous répéter ?", voice_id)
         response = VoiceResponse()
         gather = Gather(
             input="speech", action=process_url, method="POST",
@@ -100,16 +116,18 @@ def _handle_process(call_sid: str, caller_phone: str, speech: str,
     reply_text, should_hangup = process_speech(call_sid, caller_phone, speech, business_id)
 
     if should_hangup:
-        twiml = _twiml_hangup(reply_text)
+        twiml = _twiml_hangup(reply_text, voice_id)
         end_session(call_sid)
     else:
-        twiml = _twiml_response(reply_text, process_url)
+        twiml = _twiml_response(reply_text, process_url, voice_id)
 
     return Response(content=twiml, media_type="application/xml")
 
 
 def _handle_no_input(call_sid: str, caller_phone: str,
-                     process_url: str, no_input_url: str) -> Response:
+                     process_url: str, no_input_url: str,
+                     business_id: int | None = None) -> Response:
+    voice_id = _get_voice_id(business_id)
     session = get_session(call_sid, caller_phone)
     count = getattr(session, "_no_input_count", 0) + 1
     session._no_input_count = count
@@ -117,11 +135,11 @@ def _handle_no_input(call_sid: str, caller_phone: str,
     if count >= 2:
         end_session(call_sid)
         return Response(
-            content=_twiml_hangup("Je ne vous entends pas. N'hésitez pas à rappeler. Au revoir !"),
+            content=_twiml_hangup("Je ne vous entends pas. N'hésitez pas à rappeler. Au revoir !", voice_id),
             media_type="application/xml",
         )
 
-    audio_url = text_to_speech("Je ne vous entends pas bien. Pouvez-vous parler directement dans le téléphone ?")
+    audio_url = text_to_speech("Je ne vous entends pas bien. Pouvez-vous parler directement dans le téléphone ?", voice_id)
     response = VoiceResponse()
     gather = Gather(
         input="speech", action=process_url, method="POST",
@@ -173,7 +191,6 @@ def voice_end(
     if CallDuration:
         try:
             db = SessionLocal()
-            # track call duration for billing if we have a session with business_id
             from services.usage_tracker import track_voice_call
             session = get_session(CallSid, "")
             if session.business_id:
@@ -224,4 +241,4 @@ def voice_no_input_tenant(
 ):
     process_url = f"/voice/{business_id}/process"
     no_input_url = f"/voice/{business_id}/no-input"
-    return _handle_no_input(CallSid, From, process_url, no_input_url)
+    return _handle_no_input(CallSid, From, process_url, no_input_url, business_id)

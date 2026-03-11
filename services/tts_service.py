@@ -8,15 +8,17 @@ import httpx
 from config import settings
 
 
-def text_to_speech(text: str) -> str:
+def text_to_speech(text: str, voice_id: str = None) -> str:
     """
     Convertit le texte en audio via ElevenLabs.
     Retourne l'URL publique du fichier audio.
+    voice_id : utilise la voix du business si fournie, sinon la voix globale.
     """
     filename = f"{uuid.uuid4().hex}.mp3"
     filepath = os.path.join("static", "audio", filename)
 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    vid = voice_id or settings.elevenlabs_voice_id
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{vid}"
     headers = {
         "xi-api-key": settings.elevenlabs_api_key,
         "Content-Type": "application/json",

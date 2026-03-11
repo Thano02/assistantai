@@ -102,20 +102,22 @@ async def stripe_webhook(request: Request):
                     db, business_id,
                     plan=plan,
                     stripe_subscription_id=subscription_id,
+                    subscription_paid=True,
                 )
 
         elif event["type"] == "customer.subscription.updated":
             sub = event["data"]["object"]
             customer_id = sub["customer"]
-            # Chercher le business par stripe_customer_id
             from database import Business
             business = db.query(Business).filter(
                 Business.stripe_customer_id == customer_id
             ).first()
             if business:
                 status = sub.get("status")
-                if status == "canceled":
-                    update_business(db, business.id, plan="starter")
+                if status in ("active", "trialing"):
+                    update_business(db, business.id, subscription_paid=True)
+                elif status == "canceled":
+                    update_business(db, business.id, subscription_paid=False)
 
         elif event["type"] == "invoice.payment_succeeded":
             invoice = event["data"]["object"]
