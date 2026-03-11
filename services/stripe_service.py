@@ -12,13 +12,6 @@ from config import settings
 if stripe:
     stripe.api_key = settings.stripe_secret_key
 
-PLAN_PRICE_IDS = {
-    "starter": settings.stripe_price_starter,
-    "pro": settings.stripe_price_pro,
-    "enterprise": settings.stripe_price_enterprise,
-}
-
-
 def create_stripe_customer(email: str, business_name: str) -> Optional[str]:
     """Crée un customer Stripe et retourne son ID."""
     if not settings.stripe_enabled:
@@ -35,19 +28,9 @@ def create_stripe_customer(email: str, business_name: str) -> Optional[str]:
         return None
 
 
-def _resolve_price_id(plan: str) -> Optional[str]:
-    """Résout le price_id via lookup_key (prioritaire) ou env var."""
-    # 1. Essayer lookup_key
-    lookup_key = settings.stripe_price_lookup_key
-    if lookup_key:
-        try:
-            prices = stripe.Price.list(lookup_keys=[lookup_key], limit=1)
-            if prices.data:
-                return prices.data[0].id
-        except stripe.StripeError:
-            pass
-    # 2. Fallback env var
-    return PLAN_PRICE_IDS.get(plan) or None
+def _resolve_price_id() -> Optional[str]:
+    """Retourne le price_id Stripe configuré (plan unique 300€/mois)."""
+    return settings.stripe_price_id or None
 
 
 def create_checkout_session(
@@ -60,7 +43,7 @@ def create_checkout_session(
     """Crée une session Stripe Checkout pour l'abonnement. Retourne l'URL de paiement."""
     if not settings.stripe_enabled:
         return None
-    price_id = _resolve_price_id(plan)
+    price_id = _resolve_price_id()
     if not price_id:
         return None
     try:

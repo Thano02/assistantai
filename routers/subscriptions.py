@@ -39,6 +39,14 @@ def subscribe(
         if not business:
             raise HTTPException(status_code=404)
 
+        # Crée le customer Stripe si absent (comptes créés avant la config Stripe)
+        if not business.stripe_customer_id and settings.stripe_enabled:
+            from services.stripe_service import create_stripe_customer
+            cid = create_stripe_customer(business.owner_email, business.name)
+            if cid:
+                update_business(db, business_id, stripe_customer_id=cid)
+                business.stripe_customer_id = cid
+
         success_url = f"{settings.base_url}/dashboard/billing?success=1"
         cancel_url = f"{settings.base_url}/dashboard/billing"
 
@@ -51,8 +59,8 @@ def subscribe(
         )
 
         if not checkout_url:
-            logger.warning("Stripe not configured")
-            return RedirectResponse(url="/dashboard/billing?success=1", status_code=303)
+            logger.warning("Stripe checkout unavailable — check STRIPE_PRICE_ID and STRIPE_SECRET_KEY")
+            return RedirectResponse(url="/dashboard/billing?error=stripe", status_code=303)
 
         return RedirectResponse(url=checkout_url, status_code=303)
     finally:
