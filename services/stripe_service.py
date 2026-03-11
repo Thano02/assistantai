@@ -42,13 +42,14 @@ def create_checkout_session(
 ) -> Optional[str]:
     """Crée une session Stripe Checkout pour l'abonnement. Retourne l'URL de paiement."""
     if not settings.stripe_enabled:
+        print("[Stripe] stripe_enabled=False (STRIPE_SECRET_KEY manquant)", flush=True)
         return None
     price_id = _resolve_price_id()
     if not price_id:
+        print("[Stripe] STRIPE_PRICE_ID non configuré", flush=True)
         return None
     try:
-        session = stripe.checkout.Session.create(
-            customer=customer_id,
+        params = dict(
             mode="subscription",
             line_items=[{"price": price_id, "quantity": 1}],
             subscription_data={
@@ -69,9 +70,13 @@ def create_checkout_session(
             cancel_url=cancel_url,
             metadata={"business_id": str(business_id), "plan": plan},
         )
+        if customer_id:
+            params["customer"] = customer_id
+        print(f"[Stripe] Creating checkout: customer={customer_id!r} price={price_id!r} trial={settings.stripe_trial_days}d trial_amount={settings.stripe_trial_amount_cents}c", flush=True)
+        session = stripe.checkout.Session.create(**params)
         return session.url
     except stripe.StripeError as e:
-        print(f"[Stripe] Erreur création session checkout: {e}")
+        print(f"[Stripe] ERREUR checkout: {e}", flush=True)
         return None
 
 
