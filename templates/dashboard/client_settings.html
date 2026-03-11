@@ -63,31 +63,33 @@
         <div class="grid grid-cols-2 gap-3">
           {% set voices = preset_voices %}
           {% for name, voice_id, desc in voices %}
-          <label class="voice-card flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all
-            {{ 'border-primary bg-blue-50' if business.elevenlabs_voice_id == voice_id else 'border-gray-200 hover:border-gray-300' }}">
-            <input type="radio" name="voice_preset" value="{{ voice_id }}"
-              {{ 'checked' if business.elevenlabs_voice_id == voice_id }}
-              onchange="document.getElementById('custom-voice').value=''"
-              class="sr-only">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
-              {{ 'bg-primary text-white' if business.elevenlabs_voice_id == voice_id else 'bg-gray-100 text-gray-600' }}">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-gray-900">{{ name }}</p>
-              <p class="text-xs text-gray-500">{{ desc }}</p>
-            </div>
-            <button type="button" onclick="previewVoice(event, '{{ voice_id }}')"
-              class="flex-shrink-0 w-7 h-7 bg-gray-100 hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors"
+          <div class="relative">
+            <label class="voice-card flex items-center gap-3 p-3 pr-10 border-2 rounded-xl cursor-pointer transition-all
+              {{ 'border-primary bg-blue-50' if business.elevenlabs_voice_id == voice_id else 'border-gray-200 hover:border-gray-300' }}">
+              <input type="radio" name="voice_preset" value="{{ voice_id }}"
+                {{ 'checked' if business.elevenlabs_voice_id == voice_id }}
+                onchange="document.getElementById('custom-voice').value=''"
+                class="sr-only">
+              <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+                {{ 'bg-primary text-white' if business.elevenlabs_voice_id == voice_id else 'bg-gray-100 text-gray-600' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900">{{ name }}</p>
+                <p class="text-xs text-gray-500">{{ desc }}</p>
+              </div>
+            </label>
+            <button type="button" onclick="previewVoice(this, '{{ voice_id }}')"
+              class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-gray-100 hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors z-10"
               title="Écouter">
               <svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             </button>
-          </label>
+          </div>
           {% endfor %}
         </div>
       </div>
@@ -173,21 +175,22 @@ document.querySelectorAll('[name=voice_preset]').forEach(radio => {
 
 // Prévisualisation voix
 let currentAudio = null;
-async function previewVoice(e, voiceId) {
-  e.preventDefault(); e.stopPropagation();
-  const btn = e.currentTarget;
+const playIcon = '<svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const spinIcon = '<svg class="w-3.5 h-3.5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>';
+async function previewVoice(btn, voiceId) {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  btn.innerHTML = '<svg class="w-3.5 h-3.5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>';
+  btn.innerHTML = spinIcon;
   try {
     const res = await fetch(`/dashboard/voice-preview/${voiceId}`);
     const data = await res.json();
     if (data.url) {
       currentAudio = new Audio(data.url);
-      currentAudio.play();
-      currentAudio.onended = () => btn.innerHTML = '<svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      currentAudio.onended = () => { btn.innerHTML = playIcon; currentAudio = null; };
+      await currentAudio.play();
+      return;
     }
   } catch(e) {}
-  btn.innerHTML = '<svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  btn.innerHTML = playIcon;
 }
 </script>
 {% endblock %}
