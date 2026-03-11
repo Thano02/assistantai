@@ -205,6 +205,21 @@ class ContactRequest(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _run_migrations()
+
+
+def _run_migrations():
+    """Ajoute les colonnes manquantes sans Alembic (idempotent)."""
+    migrations = [
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_phone VARCHAR(20)",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(__import__("sqlalchemy").text(sql))
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
 
 def get_db() -> Session:
