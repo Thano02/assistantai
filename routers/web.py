@@ -294,6 +294,19 @@ def client_settings_page(
         db.close()
 
 
+@router.get("/dashboard/voice-preview/{voice_id}")
+def voice_preview(voice_id: str, business_id: int = Depends(get_current_business_id)):
+    """Génère un court extrait audio pour prévisualiser une voix ElevenLabs."""
+    from fastapi.responses import JSONResponse
+    from services.tts_service import text_to_speech
+    try:
+        sample = "Bonjour, je suis votre assistant vocal. Comment puis-je vous aider aujourd'hui ?"
+        url = text_to_speech(sample, voice_id)
+        return JSONResponse({"url": url})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @router.post("/dashboard/client-settings")
 def client_settings_save(
     request: Request,
@@ -301,6 +314,7 @@ def client_settings_save(
     owner_phone: str = Form(None),
     voice_preset: str = Form(None),
     voice_id: str = Form(None),
+    ai_description: str = Form(None),
     business_id: int = Depends(get_current_business_id),
 ):
     from database import update_business
@@ -315,6 +329,8 @@ def client_settings_save(
         chosen_voice = voice_preset or voice_id or None
         if chosen_voice:
             updates["elevenlabs_voice_id"] = chosen_voice
+        if ai_description is not None:
+            updates["ai_description"] = ai_description.strip() or None
         if updates:
             update_business(db, business_id, **updates)
         return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)

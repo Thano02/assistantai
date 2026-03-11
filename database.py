@@ -67,6 +67,9 @@ class Business(Base):
     # Contact propriétaire
     owner_phone = Column(String(20), nullable=True)
 
+    # Description pour le robot IA
+    ai_description = Column(Text, nullable=True)
+
     # Profession & configuration
     profession_type = Column(String(30), default="salon")
     # "ask" = robot propose le choix | "auto" = premier disponible
@@ -212,6 +215,7 @@ def _run_migrations():
     """Ajoute les colonnes manquantes sans Alembic (idempotent)."""
     migrations = [
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_phone VARCHAR(20)",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ai_description TEXT",
     ]
     with engine.connect() as conn:
         for sql in migrations:

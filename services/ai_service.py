@@ -68,7 +68,8 @@ def end_session(call_sid: str):
 # ── Prompt système ─────────────────────────────────────────────────────────
 
 def _build_system_prompt(business_name: str, services_list: str, hours_list: str, address: str,
-                          faq_block: str, has_employees: bool, employee_selection_enabled: bool) -> str:
+                          faq_block: str, has_employees: bool, employee_selection_enabled: bool,
+                          ai_description: str = "") -> str:
     tz = pytz.timezone(settings.timezone)
     now_str = datetime.now(tz).strftime("%A %d %B %Y à %H:%M")
 
@@ -79,9 +80,11 @@ def _build_system_prompt(business_name: str, services_list: str, hours_list: str
             "les employés disponibles et demande au client s'il en préfère un en particulier."
         )
 
+    description_block = f"\n\nCONTEXTE DU COMMERCE:\n{ai_description}" if ai_description else ""
+
     return f"""Tu es la réceptionniste virtuelle de "{business_name}", situé au {address}.
 Tu réponds uniquement en français, avec une voix chaleureuse, professionnelle et naturelle.
-Nous sommes le {now_str}.
+Nous sommes le {now_str}.{description_block}
 
 SERVICES PROPOSÉS:
 {services_list}
@@ -458,10 +461,12 @@ def process_speech(
             services_str = "  - Consultation"
             hours_str = "  Lundi–Vendredi: 09:00 – 18:00"
 
+            ai_description = ""
             if business_id:
                 business = get_business_by_id(db, business_id)
                 if business:
                     business_name = business.name
+                    ai_description = business.ai_description or ""
                     employee_selection_enabled = business.employee_selection_enabled or False
                     employees = get_employees(db, business_id)
                     has_employees = len(employees) > 0
@@ -498,6 +503,7 @@ def process_speech(
         system_prompt = _build_system_prompt(
             business_name, services_str, hours_str, address,
             faq_block, has_employees, employee_selection_enabled,
+            ai_description,
         )
         session.messages.append({"role": "system", "content": system_prompt})
 

@@ -85,6 +85,8 @@ def _handle_incoming(call_sid: str, caller_phone: str, base_process_url: str,
             business = get_business_by_id(db, business_id)
             if not business or not business.is_active:
                 return Response(content=_twiml_unavailable(), media_type="application/xml")
+            if not business.subscription_paid:
+                return Response(content=_twiml_unavailable(), media_type="application/xml")
             voice_id = business.elevenlabs_voice_id
             logger.info(f"[Voice] business_id={business_id} elevenlabs_voice_id={voice_id!r}")
         update_client_last_call(db, caller_phone)
