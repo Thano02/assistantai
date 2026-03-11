@@ -51,21 +51,22 @@ def create_checkout_session(
     try:
         params = dict(
             mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            subscription_data={
-                "trial_period_days": settings.stripe_trial_days,
-                "add_invoice_items": [
-                    {
-                        "price_data": {
-                            "currency": "eur",
-                            "product_data": {
-                                "name": f"Accès découverte — {settings.stripe_trial_days} premiers jours",
-                            },
-                            "unit_amount": settings.stripe_trial_amount_cents,
-                        }
-                    }
-                ],
-            },
+            line_items=[
+                # Abonnement 300€/mois (démarre après le trial)
+                {"price": price_id, "quantity": 1},
+                # Frais d'activation 30€ facturé immédiatement
+                {
+                    "price_data": {
+                        "currency": "eur",
+                        "unit_amount": settings.stripe_trial_amount_cents,
+                        "product_data": {
+                            "name": f"Accès découverte — {settings.stripe_trial_days} premiers jours",
+                        },
+                    },
+                    "quantity": 1,
+                },
+            ],
+            subscription_data={"trial_period_days": settings.stripe_trial_days},
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={"business_id": str(business_id), "plan": plan},
