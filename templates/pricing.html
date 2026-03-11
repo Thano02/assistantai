@@ -2,45 +2,109 @@
 {% block title %}Tarifs — AssistantAI{% endblock %}
 
 {% block content %}
-<section class="py-24">
+<section class="py-24 bg-gray-950">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
-    <h1 class="text-5xl font-bold text-gray-900 mb-6">Simple et transparent</h1>
-    <p class="text-xl text-gray-500 max-w-2xl mx-auto mb-16">
-      Un seul plan, toutes les fonctionnalités incluses.
-      Configurez votre assistant IA en quelques minutes.
+    <h1 class="text-5xl font-bold text-white mb-4">Simple et transparent</h1>
+    <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-16">
+      Essayez sans risque. Si ça vous convient, continuez — sinon, rien.
     </p>
 
-    <!-- Single card -->
-    <div class="bg-primary text-white rounded-3xl p-12 shadow-2xl shadow-blue-500/30 mb-16">
-      <div class="flex items-end justify-center gap-2 mb-4">
-        <span class="text-7xl font-extrabold">300€</span>
-        <span class="text-blue-200 text-xl mb-3">/mois</span>
+    <!-- Deux étapes -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+
+      <!-- Étape 1 : essai -->
+      <div class="bg-gray-900 border-2 border-blue-500 rounded-3xl p-10 flex-1 max-w-sm relative">
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-4 py-1 rounded-full tracking-wide">
+          ÉTAPE 1
+        </div>
+        <div class="text-5xl mb-4">🚀</div>
+        <div class="flex items-end justify-center gap-1 mb-2">
+          <span class="text-6xl font-extrabold text-white">30€</span>
+          <span class="text-gray-400 text-lg mb-2">une fois</span>
+        </div>
+        <p class="text-blue-400 font-semibold mb-1">7 jours d'accès complet</p>
+        <p class="text-sm text-gray-500 mb-6">Configurez, testez, évaluez.<br>Aucun engagement à ce stade.</p>
+        <ul class="space-y-2 text-left mb-8">
+          {% for f in [
+            "Robot vocal IA actif immédiatement",
+            "Toutes les fonctionnalités incluses",
+            "SMS de confirmation clients",
+            "Dashboard complet",
+            "Support disponible",
+          ] %}
+          <li class="flex items-center gap-2 text-sm text-gray-300">
+            <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ f }}
+          </li>
+          {% endfor %}
+        </ul>
+        <a href="/auth/register"
+          class="block w-full bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-xl font-bold text-base transition-all shadow-lg shadow-blue-600/30">
+          Démarrer pour 30€ →
+        </a>
       </div>
-      <p class="text-blue-100 text-lg mb-10">Toutes les fonctionnalités incluses</p>
-      <ul class="grid sm:grid-cols-2 gap-4 text-left mb-10 max-w-xl mx-auto">
-        {% for f in [
-          "Robot vocal IA (GPT-4o + ElevenLabs)",
-          "Prise de RDV automatique 24/7",
-          "Calendrier interactif",
-          "SMS de confirmation et rappels",
-          "Gestion multi-employés",
-          "FAQ automatique par profession",
-          "Google Calendar + Outlook sync",
-          "Dashboard complet",
-        ] %}
-        <li class="flex items-center gap-2 text-sm">
-          <svg class="w-4 h-4 text-blue-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-          </svg>
-          {{ f }}
-        </li>
-        {% endfor %}
-      </ul>
-      <a href="/auth/register"
-        class="inline-block bg-white text-primary hover:bg-blue-50 px-10 py-4 rounded-xl font-bold text-lg transition-all">
-        Créer mon compte →
-      </a>
+
+      <!-- Flèche -->
+      <div class="text-gray-600 text-3xl font-light hidden sm:block">→</div>
+      <div class="text-gray-600 text-3xl font-light sm:hidden">↓</div>
+
+      <!-- Étape 2 : abonnement -->
+      <div class="bg-gray-900 border border-gray-700 rounded-3xl p-10 flex-1 max-w-sm relative">
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 text-xs font-bold px-4 py-1 rounded-full tracking-wide">
+          ÉTAPE 2
+        </div>
+        <div class="text-5xl mb-4">⚡</div>
+        <div class="flex items-end justify-center gap-1 mb-2">
+          <span class="text-6xl font-extrabold text-white">300€</span>
+          <span class="text-gray-400 text-lg mb-2">/mois</span>
+        </div>
+        <p class="text-gray-300 font-semibold mb-1">Si vous êtes satisfait</p>
+        <p class="text-sm text-gray-500 mb-6">Prélevé automatiquement 7 jours<br>après le début de votre essai.</p>
+        <ul class="space-y-2 text-left mb-8">
+          {% for f in [
+            "Robot vocal IA (GPT-4o + ElevenLabs)",
+            "Prise de RDV automatique 24/7",
+            "Gestion des tables (restaurant)",
+            "Multi-employés & planning",
+            "Google Calendar + Outlook sync",
+            "FAQ automatique par profession",
+            "Résiliable à tout moment",
+          ] %}
+          <li class="flex items-center gap-2 text-sm text-gray-400">
+            <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ f }}
+          </li>
+          {% endfor %}
+        </ul>
+        <div class="block w-full bg-gray-800 text-gray-400 px-6 py-3.5 rounded-xl font-medium text-sm text-center">
+          Activé automatiquement après l'essai
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Réassurance -->
+    <div class="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
+        <div class="text-2xl mb-2">🔒</div>
+        <p class="text-sm font-semibold text-white mb-1">Paiement sécurisé</p>
+        <p class="text-xs text-gray-500">Via Stripe — carte bancaire CB, Visa, Mastercard</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
+        <div class="text-2xl mb-2">❌</div>
+        <p class="text-sm font-semibold text-white mb-1">Résiliable à tout moment</p>
+        <p class="text-xs text-gray-500">Depuis votre espace client Stripe, en 1 clic</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
+        <div class="text-2xl mb-2">⚡</div>
+        <p class="text-sm font-semibold text-white mb-1">Actif en quelques minutes</p>
+        <p class="text-xs text-gray-500">Configurez votre robot et commencez à recevoir des appels</p>
+      </div>
     </div>
 
   </div>

@@ -32,7 +32,7 @@
       Un robot IA vocal<br>pour <span class="gradient-text">chaque métier</span>
     </h1>
     <p class="text-xl text-gray-400 leading-relaxed fade-up fa-3">
-      Prise de rendez-vous, vérification d'éligibilité, réponse automatique —<br>
+      Prise de rendez-vous, gestion des tables, accueil automatique —<br>
       AssistantAI s'adapte à votre activité et parle à vos clients à votre place.
     </p>
   </div>
@@ -57,13 +57,13 @@
         ("🏥", "Cabinet médical & paramédical",
           "Kinésithérapeutes, dentistes, psychologues — automatisez la prise de RDV, respectez les délais légaux et déchargez votre secrétariat.",
           ["Agenda multi-praticiens", "Créneaux d'urgence", "SMS de rappel"]),
-        ("✅", "Vérification d'éligibilité",
-          "Posez les bonnes questions au bon moment. Le robot guide vos prospects à travers un script et vérifie leur éligibilité à un programme ou une offre.",
-          ["Script personnalisable", "Collecte de données", "Redirection qualifiée"]),
-        ("📞", "Répondeur intelligent",
-          "Même sans prise de RDV : le robot répond, informe sur vos horaires, votre adresse, vos tarifs et prend un message si besoin.",
-          ["FAQ automatique", "Horaires & infos", "Message vocal transmis"]),
-        ("🔧", "Projet sur mesure",
+        ("🔧", "Garagiste & auto",
+          "Entretien, révision, réparation — le robot prend les rendez-vous pour vos clients, gère les créneaux par technicien et envoie les confirmations automatiquement.",
+          ["RDV par type d'intervention", "Gestion multi-techniciens", "SMS de rappel"]),
+        ("🏋️", "Sport & bien-être",
+          "Coaching, ostéopathie, yoga — automatisez votre planning et offrez une expérience client irréprochable, même le soir et le week-end.",
+          ["Créneaux en temps réel", "Annulations gérées", "Rappels automatiques"]),
+        ("🔩", "Projet sur mesure",
           "Votre activité ne rentre dans aucune case ? Nous développons des assistants vocaux entièrement personnalisés selon vos besoins métier.",
           ["Script sur mesure", "Intégration CRM", "Accompagnement dédié"]),
       ] %}
@@ -115,17 +115,17 @@
 
       <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center">
-            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
-          <span class="text-white font-bold">Vérification d'éligibilité</span>
+          <span class="text-white font-bold">Garagiste — RDV par intervention</span>
         </div>
         <div class="space-y-3">
-          {% for step in ["Le prospect appelle suite à une pub ou flyer", "Le robot pose les questions de qualification (âge, situation, zone géo…)", "Il calcule l'éligibilité en temps réel selon vos critères", "Si éligible → propose un RDV avec un conseiller", "Si non éligible → oriente vers une autre solution"] %}
+          {% for step in ["Le client appelle pour une révision, un entretien ou une réparation", "Le robot identifie le type d'intervention et la durée estimée", "Il vérifie les disponibilités par technicien en temps réel", "Il confirme le créneau et envoie un SMS récapitulatif", "Rappel automatique la veille du passage"] %}
           <div class="flex items-start gap-3 text-sm text-gray-400">
-            <span class="w-5 h-5 bg-violet-600/20 text-violet-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            <span class="w-5 h-5 bg-orange-600/20 text-orange-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
             {{ step }}
           </div>
           {% endfor %}
@@ -136,13 +136,13 @@
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 bg-green-600/20 rounded-xl flex items-center justify-center">
             <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 10V6m4 4V6M10 14v4m4-4v4"/>
             </svg>
           </div>
-          <span class="text-white font-bold">Répondeur intelligent</span>
+          <span class="text-white font-bold">Restaurant — Réservation de table</span>
         </div>
         <div class="space-y-3">
-          {% for step in ["Appel entrant quand vous êtes indisponible", "Le robot répond immédiatement (jamais de sonnerie sans fin)", "Il informe sur les horaires, l'adresse, les tarifs", "Il répond aux questions fréquentes via votre FAQ", "Il prend un message si besoin et vous le transmet par email"] %}
+          {% for step in ["Le client appelle pour réserver une table", "Le robot demande le nombre de personnes et la date souhaitée", "Il vérifie les tables disponibles en temps réel", "Il assigne la table la plus adaptée et confirme", "SMS de confirmation envoyé avec les détails"] %}
           <div class="flex items-start gap-3 text-sm text-gray-400">
             <span class="w-5 h-5 bg-green-600/20 text-green-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
             {{ step }}
@@ -153,8 +153,8 @@
 
       <div class="use-card bg-gray-950 border border-gray-800 rounded-2xl p-8">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center">
-            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
@@ -163,7 +163,7 @@
         <div class="space-y-3">
           {% for step in ["Le client choisit son employé préféré (ou le premier dispo)", "Le robot consulte les agendas individuels en temps réel", "Il propose les créneaux disponibles par employé", "Confirmation envoyée au client + au collaborateur", "Modifications et annulations gérées automatiquement"] %}
           <div class="flex items-start gap-3 text-sm text-gray-400">
-            <span class="w-5 h-5 bg-orange-600/20 text-orange-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+            <span class="w-5 h-5 bg-violet-600/20 text-violet-400 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ loop.index }}</span>
             {{ step }}
           </div>
           {% endfor %}
@@ -249,10 +249,10 @@
 <section class="bg-gradient-to-r from-blue-700 to-violet-700 py-16">
   <div class="max-w-3xl mx-auto px-4 text-center">
     <h2 class="text-3xl font-black text-white mb-4">Prêt à démarrer ?</h2>
-    <p class="text-blue-100 mb-8">Créez votre compte en 2 minutes et testez gratuitement.</p>
+    <p class="text-blue-100 mb-8">Commencez avec 7 jours d'accès complet à 30€, sans engagement.</p>
     <a href="/auth/register"
        class="inline-block bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-black text-lg transition-all shadow-xl">
-      Commencer gratuitement →
+      Démarrer pour 30€ →
     </a>
   </div>
 </section>
