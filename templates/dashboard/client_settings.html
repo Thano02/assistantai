@@ -51,8 +51,6 @@
             ("Sophie", "EXAVITQu4vr4xnSDxMaL", "Douce, naturelle — femme"),
             ("Emma", "21m00Tcm4TlvDq8ikWAM", "Calme, professionnelle — femme"),
             ("Thomas", "TxGEqnHWrfWFTfGW9XjX", "Grave, chaleureux — homme"),
-            ("Lucas", "VR6AewLTigWG4xSOukaG", "Clair, dynamique — homme"),
-            ("Clara", "MF3mGyEYCl7XYWbV9V6O", "Expressive, chaleureuse — femme"),
             ("Marc", "pNInz6obpgDQGcFmaJgB", "Profond, rassurant — homme"),
           ] %}
           {% for name, voice_id, desc in voices %}
@@ -86,7 +84,7 @@
         </label>
         <div class="flex gap-3">
           <input id="custom-voice" type="text" name="voice_id"
-            value="{{ business.elevenlabs_voice_id if business.elevenlabs_voice_id not in ['EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','TxGEqnHWrfWFTfGW9XjX','VR6AewLTigWG4xSOukaG','MF3mGyEYCl7XYWbV9V6O','pNInz6obpgDQGcFmaJgB'] else '' }}"
+            value="{{ business.elevenlabs_voice_id if business.elevenlabs_voice_id not in ['EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','TxGEqnHWrfWFTfGW9XjX','pNInz6obpgDQGcFmaJgB'] else '' }}"
             placeholder="Collez un Voice ID ElevenLabs…"
             class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             oninput="document.querySelectorAll('[name=voice_preset]').forEach(r => r.checked = false)">
