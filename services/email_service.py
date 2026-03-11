@@ -79,6 +79,35 @@ def send_welcome_email(email: str, business_name: str) -> bool:
 
 # ── Call summary ──────────────────────────────────────────────────────────────
 
+def send_contact_request_email(
+    first_name: str,
+    last_name: str,
+    email: str,
+    phone: str,
+    project_description: str,
+) -> bool:
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:40px 20px">
+      <h2 style="color:#1a1a2e;margin-bottom:4px">Nouvelle demande de contact</h2>
+      <p style="color:#9ca3af;font-size:13px;margin-bottom:24px">Reçue depuis la page Fonctionnalités</p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151">
+        <tr><td style="padding:8px 0;font-weight:600;width:140px">Prénom&nbsp;:</td><td>{first_name}</td></tr>
+        <tr><td style="padding:8px 0;font-weight:600">Nom&nbsp;:</td><td>{last_name}</td></tr>
+        <tr><td style="padding:8px 0;font-weight:600">Email&nbsp;:</td><td><a href="mailto:{email}" style="color:#2563eb">{email}</a></td></tr>
+        <tr><td style="padding:8px 0;font-weight:600">Téléphone&nbsp;:</td><td>{phone or '—'}</td></tr>
+      </table>
+      <div style="margin-top:20px;background:#f3f4f6;border-radius:10px;padding:16px">
+        <p style="margin:0;font-weight:600;color:#374151;margin-bottom:8px">Projet / Message&nbsp;:</p>
+        <p style="margin:0;color:#374151;font-size:14px;white-space:pre-line">{project_description}</p>
+      </div>
+      <p style="color:#9ca3af;font-size:12px;margin-top:32px">— AssistantAI</p>
+    </div>
+    """
+    return _send("ethan36@hotmail.fr", f"Nouvelle demande — {first_name} {last_name}", html)
+
+
+# ── Call summary ──────────────────────────────────────────────────────────────
+
 def send_call_summary_email(
     email: str,
     business_name: str,

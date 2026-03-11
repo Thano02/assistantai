@@ -74,6 +74,8 @@ def features_contact(
                 project_description=project_description,
             ))
             db.commit()
+            from services.email_service import send_contact_request_email
+            send_contact_request_email(first_name, last_name, email, phone or "", project_description)
     finally:
         db.close()
     return RedirectResponse(url="/features?contact_success=1#contact", status_code=303)
