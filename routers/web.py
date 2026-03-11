@@ -360,7 +360,9 @@ def settings_save(
         if business_name:
             updates["name"] = business_name
         if twilio_phone:
-            updates["twilio_phone_number"] = twilio_phone
+            # Normalize to E.164: strip spaces, dashes, dots
+            normalized = twilio_phone.strip().replace(" ", "").replace("-", "").replace(".", "")
+            updates["twilio_phone_number"] = normalized
         if twilio_sid:
             updates["twilio_account_sid"] = twilio_sid
         if twilio_token:

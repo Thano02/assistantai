@@ -509,8 +509,19 @@ def get_business_by_id(db: Session, business_id: int) -> Business:
 
 
 def get_business_by_twilio_number(db: Session, phone_number: str) -> Business:
-    """Trouve le business par son numéro Twilio (champ To de l'appel entrant)."""
-    return db.query(Business).filter(Business.twilio_phone_number == phone_number).first()
+    """Trouve le business par son numéro Twilio (champ To de l'appel entrant).
+    Normalise les deux côtés pour éviter les problèmes de format (espaces, tirets).
+    """
+    normalized = phone_number.strip().replace(" ", "").replace("-", "").replace(".", "")
+    # Try exact match first, then strip-normalized stored values
+    business = db.query(Business).filter(Business.twilio_phone_number == normalized).first()
+    if not business:
+        # Fallback: compare after stripping stored value (handles legacy data)
+        all_businesses = db.query(Business).filter(Business.twilio_phone_number.isnot(None)).all()
+        for b in all_businesses:
+            if b.twilio_phone_number.replace(" ", "").replace("-", "").replace(".", "") == normalized:
+                return b
+    return business
 
 
 def create_business(
