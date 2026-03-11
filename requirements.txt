@@ -20,5 +20,5 @@ jinja2==3.1.4
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.2.0
-# stripe==10.12.0   # Optionnel — activer pour la facturation
+stripe==10.12.0
 # msal==1.31.0      # Optionnel — activer pour Outlook Calendar
