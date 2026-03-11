@@ -80,10 +80,7 @@ def _build_system_prompt(business_name: str, services_list: str, hours_list: str
             "les employés disponibles et demande au client s'il en préfère un en particulier."
         )
 
-    description_block = f"
-
-CONTEXTE DU COMMERCE:
-{ai_description}" if ai_description else ""
+    description_block = ("\n\nCONTEXTE DU COMMERCE:\n" + ai_description) if ai_description else ""
 
     if profession_type == "restaurant":
         return f"""Tu es l'hôte(sse) d'accueil du restaurant "{business_name}".
