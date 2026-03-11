@@ -315,6 +315,7 @@ def client_settings_save(
     voice_preset: str = Form(None),
     voice_id: str = Form(None),
     ai_description: str = Form(None),
+    profession_type: str = Form(None),
     business_id: int = Depends(get_current_business_id),
 ):
     from database import update_business
@@ -331,6 +332,8 @@ def client_settings_save(
             updates["elevenlabs_voice_id"] = chosen_voice
         if ai_description is not None:
             updates["ai_description"] = ai_description.strip() or None
+        if profession_type:
+            updates["profession_type"] = profession_type
         if updates:
             update_business(db, business_id, **updates)
         return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)
@@ -530,5 +533,64 @@ def billing_page(
             "portal_available": bool(business.stripe_customer_id and settings.stripe_enabled),
             "page": "billing",
         })
+    finally:
+        db.close()
+
+
+# ─── RESTAURANT TABLES ────────────────────────────────────────────────────────
+
+@router.get("/dashboard/tables")
+def tables_page(
+    request: Request,
+    success: str = Query(None),
+    business_id: int = Depends(get_current_business_id),
+):
+    from database import get_tables, get_table_reservations_today
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, business_id)
+        gate = _check_subscription(business)
+        if gate:
+            return gate
+        tables = get_tables(db, business_id)
+        today_reservations = get_table_reservations_today(db, business_id)
+        return templates.TemplateResponse("dashboard/restaurant_tables.html", {
+            "request": request,
+            "business": business,
+            "tables": tables,
+            "today_reservations": today_reservations,
+            "success": success,
+            "page": "tables",
+        })
+    finally:
+        db.close()
+
+
+@router.post("/dashboard/tables")
+def tables_add(
+    request: Request,
+    name: str = Form(...),
+    capacity: int = Form(...),
+    business_id: int = Depends(get_current_business_id),
+):
+    from database import create_table
+    db = SessionLocal()
+    try:
+        create_table(db, business_id, name.strip(), capacity)
+        return RedirectResponse(url="/dashboard/tables?success=added", status_code=303)
+    finally:
+        db.close()
+
+
+@router.post("/dashboard/tables/{table_id}/delete")
+def tables_delete(
+    table_id: int,
+    business_id: int = Depends(get_current_business_id),
+):
+    from database import delete_table
+    db = SessionLocal()
+    try:
+        delete_table(db, table_id, business_id)
+        return RedirectResponse(url="/dashboard/tables?success=deleted", status_code=303)
     finally:
         db.close()

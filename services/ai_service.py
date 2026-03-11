@@ -69,7 +69,7 @@ def end_session(call_sid: str):
 
 def _build_system_prompt(business_name: str, services_list: str, hours_list: str, address: str,
                           faq_block: str, has_employees: bool, employee_selection_enabled: bool,
-                          ai_description: str = "") -> str:
+                          ai_description: str = "", profession_type: str = "salon") -> str:
     tz = pytz.timezone(settings.timezone)
     now_str = datetime.now(tz).strftime("%A %d %B %Y à %H:%M")
 
@@ -80,7 +80,33 @@ def _build_system_prompt(business_name: str, services_list: str, hours_list: str
             "les employés disponibles et demande au client s'il en préfère un en particulier."
         )
 
-    description_block = f"\n\nCONTEXTE DU COMMERCE:\n{ai_description}" if ai_description else ""
+    description_block = f"
+
+CONTEXTE DU COMMERCE:
+{ai_description}" if ai_description else ""
+
+    if profession_type == "restaurant":
+        return f"""Tu es l'hôte(sse) d'accueil du restaurant "{business_name}".
+Tu réponds uniquement en français, avec une voix chaleureuse et professionnelle.
+Nous sommes le {now_str}.{description_block}
+
+HORAIRES D'OUVERTURE:
+{hours_list}
+
+TON RÔLE:
+1. Demander combien de personnes souhaitent réserver et pour quelle date/heure.
+2. Vérifier les tables disponibles avec check_available_tables.
+3. Proposer la table la plus adaptée (capacité = groupe ou légèrement supérieure).
+4. Confirmer le nom du client (utilise get_client_info pour l'historique).
+5. Réserver avec book_table.
+6. Mettre fin à l'appel poliment avec end_call.
+
+RÈGLES:
+- Sois concis — c'est un appel vocal.
+- Ne propose jamais une table sans avoir vérifié via check_available_tables.
+- Toujours confirmer date, heure, nombre de personnes et nom avant de valider.
+- En cas d'indisponibilité, propose d'autres créneaux.
+- Appelle end_call uniquement quand la réservation est confirmée ou la conversation terminée.{faq_block}"""
 
     return f"""Tu es la réceptionniste virtuelle de "{business_name}", situé au {address}.
 Tu réponds uniquement en français, avec une voix chaleureuse, professionnelle et naturelle.
@@ -219,6 +245,45 @@ EMPLOYEE_TOOL = {
         "parameters": {"type": "object", "properties": {}, "required": []},
     },
 }
+
+RESTAURANT_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "check_available_tables",
+            "description": "Vérifie quelles tables sont disponibles pour un nombre de personnes et un créneau.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "date": {"type": "string", "description": "YYYY-MM-DD ou 'demain', 'lundi'…"},
+                    "time": {"type": "string", "description": "HH:MM"},
+                    "party_size": {"type": "integer", "description": "Nombre de personnes"},
+                },
+                "required": ["date", "time", "party_size"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "book_table",
+            "description": "Réserve une table pour un groupe et envoie le SMS de confirmation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "phone_number": {"type": "string"},
+                    "client_name": {"type": "string"},
+                    "date": {"type": "string", "description": "YYYY-MM-DD"},
+                    "time": {"type": "string", "description": "HH:MM"},
+                    "party_size": {"type": "integer"},
+                    "table_id": {"type": "integer", "description": "ID de la table choisie"},
+                    "table_name": {"type": "string", "description": "Nom de la table"},
+                },
+                "required": ["phone_number", "date", "time", "party_size", "table_id", "table_name"],
+            },
+        },
+    },
+]
 
 
 # ── Exécution des outils ───────────────────────────────────────────────────
@@ -386,6 +451,63 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
                 "message": "Réservation modifiée. Nouveau SMS de confirmation envoyé.",
             }, ensure_ascii=False)
 
+        elif tool_name == "check_available_tables":
+            from database import get_available_tables
+            date_str = parse_date_fr(args["date"]) or args["date"]
+            time_str = args["time"]
+            party_size = int(args["party_size"])
+            tz = pytz.timezone(settings.timezone)
+            dt = tz.localize(datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M"))
+            tables = get_available_tables(db, business_id, dt, party_size)
+            if not tables:
+                return json.dumps({
+                    "available": False,
+                    "message": f"Aucune table disponible pour {party_size} personnes à {time_str} le {date_str}.",
+                }, ensure_ascii=False)
+            return json.dumps({
+                "available": True,
+                "tables": [{"id": t.id, "name": t.name, "capacity": t.capacity} for t in tables],
+                "message": f"{len(tables)} table(s) disponible(s) pour {party_size} personnes.",
+            }, ensure_ascii=False)
+
+        elif tool_name == "book_table":
+            from database import get_available_tables
+            phone = args["phone_number"]
+            client_name = args.get("client_name", "")
+            date_str = parse_date_fr(args["date"]) or args["date"]
+            time_str = args["time"]
+            party_size = int(args["party_size"])
+            table_id = int(args["table_id"])
+            table_name = args["table_name"]
+            tz = pytz.timezone(settings.timezone)
+            appointment_dt = tz.localize(datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M"))
+
+            if client_name:
+                update_client_name(db, phone, client_name)
+
+            reservation = create_reservation(
+                db, phone,
+                service_name=f"Réservation {party_size} pers.",
+                appointment_dt=appointment_dt,
+                duration_minutes=90,
+                business_id=business_id,
+                table_id=table_id,
+                table_name=table_name,
+                party_size=party_size,
+            )
+
+            send_confirmation_sms(phone, client_name, f"Table {table_name} ({party_size} pers.)", appointment_dt, reservation.id)
+            session.reservation_info = {
+                "service": f"Table {table_name} pour {party_size} personnes",
+                "datetime": appointment_dt.strftime("%d/%m/%Y à %H:%M"),
+                "employee": "",
+            }
+            return json.dumps({
+                "success": True,
+                "reservation_id": reservation.id,
+                "message": f"Table {table_name} réservée pour {party_size} personnes. SMS envoyé.",
+            }, ensure_ascii=False)
+
         elif tool_name == "end_call":
             return json.dumps({"action": "hangup", "message": args.get("message", "")})
 
@@ -462,11 +584,13 @@ def process_speech(
             hours_str = "  Lundi–Vendredi: 09:00 – 18:00"
 
             ai_description = ""
+            profession_type = "salon"
             if business_id:
                 business = get_business_by_id(db, business_id)
                 if business:
                     business_name = business.name
                     ai_description = business.ai_description or ""
+                    profession_type = business.profession_type or "salon"
                     employee_selection_enabled = business.employee_selection_enabled or False
                     employees = get_employees(db, business_id)
                     has_employees = len(employees) > 0
@@ -503,21 +627,32 @@ def process_speech(
         system_prompt = _build_system_prompt(
             business_name, services_str, hours_str, address,
             faq_block, has_employees, employee_selection_enabled,
-            ai_description,
+            ai_description, profession_type,
         )
         session.messages.append({"role": "system", "content": system_prompt})
 
     session.messages.append({"role": "user", "content": speech_text})
 
-    tools = BASE_TOOLS.copy()
-    if session.business_id:
-        db = SessionLocal()
-        try:
-            business = get_business_by_id(db, session.business_id)
-            if business and business.employee_selection_enabled:
-                tools.append(EMPLOYEE_TOOL)
-        finally:
-            db.close()
+    db2 = SessionLocal()
+    try:
+        biz = get_business_by_id(db2, session.business_id) if session.business_id else None
+        is_restaurant = biz and biz.profession_type == "restaurant"
+    finally:
+        db2.close()
+
+    if is_restaurant:
+        # Restaurant: remplace les outils d'appointment par les outils table
+        tools = [t for t in BASE_TOOLS if t["function"]["name"] not in ("check_available_slots",)] + RESTAURANT_TOOLS
+    else:
+        tools = BASE_TOOLS.copy()
+        if session.business_id:
+            db2b = SessionLocal()
+            try:
+                business = get_business_by_id(db2b, session.business_id)
+                if business and business.employee_selection_enabled:
+                    tools.append(EMPLOYEE_TOOL)
+            finally:
+                db2b.close()
 
     # GPT-4o loop
     for _ in range(5):

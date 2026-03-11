@@ -16,6 +16,23 @@
     <h2 class="font-semibold text-gray-900 mb-5">Informations du commerce</h2>
     <form method="post" action="/dashboard/client-settings" class="space-y-4">
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Type d'activité</label>
+        <select name="profession_type"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+          {% set types = [
+            ("salon", "Salon de coiffure / esthétique"),
+            ("restaurant", "Restaurant"),
+            ("garage", "Garage / Auto"),
+            ("medical", "Médical / Paramédical"),
+            ("sport", "Sport / Bien-être"),
+            ("other", "Autre"),
+          ] %}
+          {% for val, label in types %}
+          <option value="{{ val }}" {{ "selected" if business.profession_type == val }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom du commerce</label>
         <input type="text" name="business_name" value="{{ business.name }}"
           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">

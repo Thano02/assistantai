@@ -82,6 +82,15 @@
         <span>Ma voix</span>
       </a>
       {% endif %}
+      {% if business.profession_type == 'restaurant' %}
+      <a href="/dashboard/tables" class="nav-item {% if page == 'tables' %}active{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 10h18M3 14h18M10 10V6m4 4V6M10 14v4m4-4v4"/>
+        </svg>
+        <span>Tables</span>
+      </a>
+      {% else %}
       <a href="/dashboard/employees" class="nav-item {% if page == 'employees' %}active{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -89,6 +98,7 @@
         </svg>
         <span>Employés</span>
       </a>
+      {% endif %}
       <a href="/dashboard/faq" class="nav-item {% if page == 'faq' %}active{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

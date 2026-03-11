@@ -192,8 +192,22 @@ class Reservation(Base):
     google_event_id = Column(String(200), nullable=True)
     reminder_sent = Column(Boolean, default=False)
     notes = Column(Text, nullable=True)
+    table_id = Column(Integer, ForeignKey("restaurant_tables.id"), nullable=True)
+    table_name = Column(String(100), nullable=True)  # snapshot
+    party_size = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RestaurantTable(Base):
+    __tablename__ = "restaurant_tables"
+
+    id = Column(Integer, primary_key=True, index=True)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False, index=True)
+    name = Column(String(50), nullable=False)        # "Table 1", "Salle VIP"…
+    capacity = Column(Integer, nullable=False)        # 2, 4, 6, 8…
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ContactRequest(Base):
@@ -220,6 +234,17 @@ def _run_migrations():
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ai_description TEXT",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_current_period_end TIMESTAMP",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
+        "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS table_id INTEGER",
+        "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS table_name VARCHAR(100)",
+        "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS party_size INTEGER",
+        """CREATE TABLE IF NOT EXISTS restaurant_tables (
+            id SERIAL PRIMARY KEY,
+            business_id INTEGER NOT NULL REFERENCES businesses(id),
+            name VARCHAR(50) NOT NULL,
+            capacity INTEGER NOT NULL,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW()
+        )""",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -316,6 +341,9 @@ def create_reservation(
     employee_id: int = None,
     employee_name: str = None,
     business_id: int = None,
+    table_id: int = None,
+    table_name: str = None,
+    party_size: int = None,
 ) -> Reservation:
     client = get_or_create_client(db, phone_number)
     reservation = Reservation(
@@ -327,6 +355,9 @@ def create_reservation(
         employee_id=employee_id,
         employee_name=employee_name,
         business_id=business_id,
+        table_id=table_id,
+        table_name=table_name,
+        party_size=party_size,
     )
     db.add(reservation)
     client.total_reservations += 1
@@ -355,6 +386,85 @@ def modify_reservation(
         db.commit()
         db.refresh(reservation)
     return reservation
+
+
+# ─── RESTAURANT TABLES ───────────────────────────────────────────────────────
+
+def get_tables(db: Session, business_id: int) -> list:
+    return (db.query(RestaurantTable)
+            .filter(RestaurantTable.business_id == business_id,
+                    RestaurantTable.is_active == True)
+            .order_by(RestaurantTable.capacity, RestaurantTable.name)
+            .all())
+
+
+def create_table(db: Session, business_id: int, name: str, capacity: int) -> RestaurantTable:
+    table = RestaurantTable(business_id=business_id, name=name, capacity=capacity)
+    db.add(table)
+    db.commit()
+    db.refresh(table)
+    return table
+
+
+def delete_table(db: Session, table_id: int, business_id: int) -> bool:
+    table = db.query(RestaurantTable).filter(
+        RestaurantTable.id == table_id,
+        RestaurantTable.business_id == business_id,
+    ).first()
+    if table:
+        table.is_active = False
+        db.commit()
+        return True
+    return False
+
+
+def get_available_tables(
+    db: Session,
+    business_id: int,
+    dt: datetime,
+    party_size: int,
+    duration_minutes: int = 90,
+) -> list:
+    """Retourne les tables actives pouvant accueillir party_size au créneau dt."""
+    from datetime import timedelta
+    req_end = dt + timedelta(minutes=duration_minutes)
+
+    tables = (db.query(RestaurantTable)
+              .filter(RestaurantTable.business_id == business_id,
+                      RestaurantTable.capacity >= party_size,
+                      RestaurantTable.is_active == True)
+              .order_by(RestaurantTable.capacity)  # table la plus petite adaptée en premier
+              .all())
+
+    available = []
+    for table in tables:
+        # Vérifie s'il existe une réservation qui chevauche le créneau demandé
+        conflict = (db.query(Reservation)
+                    .filter(Reservation.table_id == table.id,
+                            Reservation.status == ReservationStatus.CONFIRMED)
+                    .all())
+        has_conflict = any(
+            r.appointment_dt < req_end and
+            r.appointment_dt + timedelta(minutes=r.duration_minutes) > dt
+            for r in conflict
+        )
+        if not has_conflict:
+            available.append(table)
+    return available
+
+
+def get_table_reservations_today(db: Session, business_id: int) -> list:
+    """Retourne toutes les réservations d'aujourd'hui avec leur table."""
+    from datetime import date, timedelta
+    today = datetime.combine(date.today(), datetime.min.time())
+    tomorrow = today + timedelta(days=1)
+    return (db.query(Reservation)
+            .filter(Reservation.business_id == business_id,
+                    Reservation.appointment_dt >= today,
+                    Reservation.appointment_dt < tomorrow,
+                    Reservation.status == ReservationStatus.CONFIRMED)
+            .order_by(Reservation.appointment_dt)
+            .all())
 
 
 def get_taken_slots(db: Session, date_str: str) -> list[tuple[datetime, int]]:

@@ -1,0 +1,118 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Tables — AssistantAI{% endblock %}
+{% block page_title %}Gestion des tables{% endblock %}
+
+{% block content %}
+{% if success == 'added' %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ✅ Table ajoutée avec succès.
+</div>
+{% elif success == 'deleted' %}
+<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+  ✅ Table supprimée.
+</div>
+{% endif %}
+
+<div class="max-w-4xl space-y-6">
+
+  <!-- Ajouter une table -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Ajouter une table</h2>
+    <form method="post" action="/dashboard/tables" class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom / Numéro</label>
+        <input type="text" name="name" required placeholder="Table 1, Salle VIP…"
+          class="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-44">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Capacité (personnes)</label>
+        <select name="capacity" required
+          class="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
+          {% for n in [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20] %}
+          <option value="{{ n }}">{{ n }} pers.</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit"
+        class="bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Ajouter
+      </button>
+    </form>
+  </div>
+
+  <!-- Liste des tables -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">
+      Mes tables
+      <span class="text-sm font-normal text-gray-400 ml-2">{{ tables|length }} table(s)</span>
+    </h2>
+
+    {% if not tables %}
+    <p class="text-sm text-gray-400 py-4 text-center">Aucune table configurée. Ajoutez vos tables ci-dessus.</p>
+    {% else %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {% for table in tables %}
+      {% set is_busy = today_reservations | selectattr('table_id', 'equalto', table.id) | list | length > 0 %}
+      <div class="relative border-2 rounded-xl p-4 text-center
+        {{ 'border-red-200 bg-red-50' if is_busy else 'border-gray-200 bg-gray-50' }}">
+        <!-- Badge occupé/libre -->
+        <span class="absolute top-2 right-2 text-xs font-semibold px-1.5 py-0.5 rounded-full
+          {{ 'bg-red-100 text-red-600' if is_busy else 'bg-green-100 text-green-600' }}">
+          {{ 'Occupée' if is_busy else 'Libre' }}
+        </span>
+        <!-- Icône table -->
+        <div class="mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2
+          {{ 'bg-red-100' if is_busy else 'bg-blue-50' }}">
+          <svg class="w-5 h-5 {{ 'text-red-500' if is_busy else 'text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M3 14h18M10 10V6m4 4V6M10 14v4m4-4v4"/>
+          </svg>
+        </div>
+        <p class="text-sm font-semibold text-gray-900">{{ table.name }}</p>
+        <p class="text-xs text-gray-500">{{ table.capacity }} pers. max</p>
+        <!-- Supprimer -->
+        <form method="post" action="/dashboard/tables/{{ table.id }}/delete"
+          onsubmit="return confirm('Supprimer {{ table.name }} ?')">
+          <button type="submit"
+            class="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors">
+            Supprimer
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Réservations du jour -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Réservations aujourd'hui</h2>
+    {% if not today_reservations %}
+    <p class="text-sm text-gray-400 py-2 text-center">Aucune réservation pour aujourd'hui.</p>
+    {% else %}
+    <div class="space-y-2">
+      {% for r in today_reservations %}
+      <div class="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-semibold text-primary">{{ r.appointment_dt.strftime('%H:%M') }}</span>
+          <div>
+            <p class="text-sm font-medium text-gray-900">
+              {{ r.table_name or 'Table' }}
+              {% if r.party_size %}
+              <span class="text-gray-500 font-normal">— {{ r.party_size }} pers.</span>
+              {% endif %}
+            </p>
+            <p class="text-xs text-gray-400">{{ r.service_name }}</p>
+          </div>
+        </div>
+        <span class="text-xs bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full font-medium">
+          Confirmé
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
