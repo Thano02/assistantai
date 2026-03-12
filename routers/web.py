@@ -668,3 +668,25 @@ def tables_delete(
         return RedirectResponse(url="/dashboard/tables?success=deleted", status_code=303)
     finally:
         db.close()
+
+
+# ── Pages légales ──────────────────────────────────────────────────────────────
+
+@router.get("/mentions-legales")
+def mentions_legales(request: Request):
+    return templates.TemplateResponse("mentions-legales.html", {"request": request})
+
+
+@router.get("/politique-confidentialite")
+def politique_confidentialite(request: Request):
+    return templates.TemplateResponse("politique-confidentialite.html", {"request": request})
+
+
+@router.get("/cgu")
+def cgu(request: Request):
+    return templates.TemplateResponse("cgu.html", {"request": request})
+
+
+@router.get("/cgv")
+def cgv(request: Request):
+    return templates.TemplateResponse("cgv.html", {"request": request})

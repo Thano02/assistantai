@@ -1,0 +1,120 @@
+{% extends "base_public.html" %}
+{% block title %}Conditions Générales de Vente — AssistantAI{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-white">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">Conditions Générales de Vente</h1>
+    <p class="text-sm text-gray-400 mb-10">Dernière mise à jour : mars 2026</p>
+
+    <div class="space-y-8 text-gray-700 leading-relaxed">
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">1. Vendeur</h2>
+        <p>Les présentes Conditions Générales de Vente (CGV) s'appliquent à toutes les ventes conclues entre :</p>
+        <ul class="mt-2 space-y-1 list-none pl-0 text-sm">
+          <li><strong>[NOM DE LA SOCIÉTÉ]</strong>, [FORME JURIDIQUE]</li>
+          <li>Siège social : [ADRESSE]</li>
+          <li>SIRET : [NUMÉRO SIRET]</li>
+          <li>Email : <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a></li>
+        </ul>
+        <p class="mt-2">Et tout professionnel souscrivant à l'offre AssistantAI (ci-après « le Client »).</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">2. Offre et tarifs</h2>
+
+        <div class="bg-gray-50 rounded-xl p-5 space-y-4 text-sm">
+          <div>
+            <p class="font-semibold text-gray-900">Phase d'essai (Étape 1)</p>
+            <ul class="mt-1 space-y-1 list-disc pl-5 text-gray-600">
+              <li>Montant : <strong>30€ TTC</strong> (paiement unique)</li>
+              <li>Durée : 7 jours d'accès complet à toutes les fonctionnalités</li>
+              <li>Non remboursable sauf exercice du droit de rétractation (voir article 6)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">Abonnement Pro (Étape 2)</p>
+            <ul class="mt-1 space-y-1 list-disc pl-5 text-gray-600">
+              <li>Montant : <strong>329€ HT/mois</strong></li>
+              <li>Inclus : 500 appels traités par mois</li>
+              <li>Dépassement : <strong>0,20€ HT par appel supplémentaire</strong></li>
+              <li>Renouvellement automatique mensuel à l'issue de la phase d'essai</li>
+              <li>Résiliable à tout moment, sans pénalité</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="mt-3 text-sm text-gray-500">Les prix sont indiqués en euros. La TVA applicable sera précisée sur les factures selon le régime fiscal du vendeur.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">3. Commande et formation du contrat</h2>
+        <p class="text-sm">Le contrat est formé lors de la validation du paiement sur la plateforme Stripe. Le Client reçoit une confirmation par e-mail. L'accès au Service est activé immédiatement après paiement.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">4. Modalités de paiement</h2>
+        <ul class="text-sm space-y-1 list-disc pl-5">
+          <li>Les paiements sont traités par <strong>Stripe</strong>, prestataire de paiement certifié PCI-DSS niveau 1</li>
+          <li>Moyens acceptés : carte bancaire (Visa, Mastercard, American Express)</li>
+          <li>L'abonnement mensuel est prélevé automatiquement chaque mois</li>
+          <li>En cas d'échec de prélèvement, le Service peut être suspendu après notification</li>
+          <li>Une facture électronique est émise automatiquement pour chaque paiement</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">5. Dépassement de quota</h2>
+        <p class="text-sm">L'abonnement Pro inclut 500 appels par mois. Au-delà de ce seuil, chaque appel supplémentaire est facturé 0,20€ HT. Le Client sera notifié par e-mail dès 80% du quota atteint.</p>
+        <p class="mt-2 text-sm">Le montant de dépassement est calculé en fin de mois et facturé sur le prochain prélèvement.</p>
+        <div class="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
+          <strong>Exemple :</strong> 620 appels dans le mois → 329€ + (120 × 0,20€) = <strong>353€</strong> ce mois-là.
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">6. Droit de rétractation</h2>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-900">
+          <p class="font-semibold mb-2">⚠️ Information importante</p>
+          <p>Conformément à l'article L221-28 du Code de la consommation, <strong>le droit de rétractation ne s'applique pas</strong> aux contrats de fourniture de contenu numérique dont l'exécution a commencé avant la fin du délai de rétractation, avec l'accord préalable exprès du consommateur.</p>
+          <p class="mt-2">En activant votre accès immédiatement après paiement, vous acceptez expressément que l'exécution du Service débute sans délai, renonçant ainsi à votre droit de rétractation de 14 jours.</p>
+        </div>
+        <p class="mt-3 text-sm">Si vous n'avez pas encore activé ou utilisé le Service, vous pouvez exercer votre droit de rétractation dans les 14 jours suivant la commande en contactant : <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a></p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">7. Résiliation de l'abonnement</h2>
+        <ul class="text-sm space-y-2 list-disc pl-5">
+          <li>Le Client peut résilier son abonnement à tout moment depuis le <strong>portail Stripe</strong> accessible via son tableau de bord</li>
+          <li>La résiliation prend effet à la fin de la période d'abonnement en cours</li>
+          <li>Aucun remboursement prorata temporis n'est accordé</li>
+          <li>Les données sont conservées 30 jours après résiliation, puis supprimées définitivement</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">8. Garanties et responsabilité</h2>
+        <p class="text-sm">AssistantAI garantit que le Service fonctionnera conformément à sa description. En cas de dysfonctionnement avéré et persistant, un avoir ou remboursement partiel pourra être accordé au prorata de l'indisponibilité.</p>
+        <p class="mt-2 text-sm">La responsabilité d'AssistantAI est limitée au montant des sommes versées par le Client au cours des 3 derniers mois précédant le fait générateur.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">9. Litiges</h2>
+        <p class="text-sm">En cas de litige, le Client contacte en premier lieu AssistantAI à <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a> pour une résolution amiable.</p>
+        <p class="mt-2 text-sm">À défaut d'accord dans un délai de 30 jours, le litige est soumis aux tribunaux compétents de [VILLE DU SIÈGE SOCIAL], nonobstant pluralité de défendeurs ou appel en garantie.</p>
+        <p class="mt-2 text-sm">Les présentes CGV sont régies par le droit français.</p>
+      </div>
+
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-gray-100 flex flex-wrap gap-4 text-sm text-gray-400">
+      <a href="/mentions-legales" class="hover:text-gray-700 transition-colors">Mentions légales</a>
+      <a href="/politique-confidentialite" class="hover:text-gray-700 transition-colors">Politique de confidentialité</a>
+      <a href="/cgu" class="hover:text-gray-700 transition-colors">CGU</a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

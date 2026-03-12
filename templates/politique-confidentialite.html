@@ -1,0 +1,183 @@
+{% extends "base_public.html" %}
+{% block title %}Politique de confidentialité — AssistantAI{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-white">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">Politique de confidentialité</h1>
+    <p class="text-sm text-gray-400 mb-10">Dernière mise à jour : mars 2026 — Conformément au RGPD (UE) 2016/679</p>
+
+    <div class="space-y-8 text-gray-700 leading-relaxed">
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">1. Responsable du traitement</h2>
+        <p>Le responsable du traitement des données personnelles est :</p>
+        <ul class="mt-2 space-y-1 list-none pl-0">
+          <li><strong>[NOM DE LA SOCIÉTÉ]</strong>, [ADRESSE]</li>
+          <li>Contact : <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">2. Données collectées</h2>
+        <p class="mb-3">Nous collectons les données suivantes selon les contextes :</p>
+
+        <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+          <div>
+            <p class="font-semibold text-gray-900 text-sm">Données des professionnels (clients AssistantAI)</p>
+            <ul class="mt-1 text-sm space-y-1 list-disc pl-5">
+              <li>Nom, prénom, adresse e-mail, mot de passe (hashé)</li>
+              <li>Nom du commerce, adresse, numéro de téléphone professionnel</li>
+              <li>Informations de facturation (traitées par Stripe)</li>
+              <li>Données d'utilisation (appels, SMS, tokens IA)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900 text-sm">Données des clients finaux (appelants)</p>
+            <ul class="mt-1 text-sm space-y-1 list-disc pl-5">
+              <li>Prénom, nom (collectés par le robot vocal)</li>
+              <li>Numéro de téléphone (fourni automatiquement par Twilio)</li>
+              <li>Données de rendez-vous (service, date, heure)</li>
+              <li>Enregistrement vocal des appels (si activé par le professionnel)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">3. Finalités et bases légales</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left p-3 border border-gray-200 font-semibold text-gray-900">Finalité</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold text-gray-900">Base légale</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-3 border border-gray-200">Fourniture du service (robot vocal, prise de RDV)</td>
+                <td class="p-3 border border-gray-200">Exécution du contrat</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200">Gestion des comptes et authentification</td>
+                <td class="p-3 border border-gray-200">Exécution du contrat</td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-gray-200">Facturation et paiement</td>
+                <td class="p-3 border border-gray-200">Obligation légale + exécution du contrat</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200">Envoi de SMS de confirmation/rappel</td>
+                <td class="p-3 border border-gray-200">Intérêt légitime / consentement</td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-gray-200">Suivi de la consommation et statistiques</td>
+                <td class="p-3 border border-gray-200">Exécution du contrat</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200">Amélioration du service</td>
+                <td class="p-3 border border-gray-200">Intérêt légitime</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">4. Durée de conservation</h2>
+        <ul class="space-y-2 text-sm list-disc pl-5">
+          <li><strong>Données de compte :</strong> durée de l'abonnement + 3 ans après résiliation</li>
+          <li><strong>Données de facturation :</strong> 10 ans (obligation comptable)</li>
+          <li><strong>Données de rendez-vous (clients finaux) :</strong> 1 an après le RDV</li>
+          <li><strong>Logs d'appels et d'utilisation :</strong> 13 mois glissants</li>
+          <li><strong>Fichiers audio temporaires :</strong> supprimés automatiquement après 1 heure</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">5. Sous-traitants et transferts</h2>
+        <p class="mb-3">Nous faisons appel aux prestataires suivants, chacun disposant de sa propre politique de confidentialité et de mesures de sécurité adéquates :</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left p-3 border border-gray-200 font-semibold text-gray-900">Prestataire</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold text-gray-900">Rôle</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold text-gray-900">Localisation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-3 border border-gray-200 font-medium">OpenAI</td>
+                <td class="p-3 border border-gray-200">Intelligence artificielle (traitement vocal)</td>
+                <td class="p-3 border border-gray-200">États-Unis (clauses contractuelles types)</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200 font-medium">ElevenLabs</td>
+                <td class="p-3 border border-gray-200">Synthèse vocale (text-to-speech)</td>
+                <td class="p-3 border border-gray-200">États-Unis (clauses contractuelles types)</td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-gray-200 font-medium">Twilio</td>
+                <td class="p-3 border border-gray-200">Appels téléphoniques et SMS</td>
+                <td class="p-3 border border-gray-200">États-Unis (clauses contractuelles types)</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200 font-medium">Stripe</td>
+                <td class="p-3 border border-gray-200">Paiement en ligne</td>
+                <td class="p-3 border border-gray-200">États-Unis / UE (certifié PCI-DSS)</td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-gray-200 font-medium">Railway</td>
+                <td class="p-3 border border-gray-200">Hébergement et base de données</td>
+                <td class="p-3 border border-gray-200">États-Unis (clauses contractuelles types)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-3 text-sm text-gray-500">Les transferts hors UE sont encadrés par des clauses contractuelles types approuvées par la Commission européenne, conformément à l'article 46 du RGPD.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">6. Vos droits</h2>
+        <p class="mb-3">Conformément au RGPD, vous disposez des droits suivants :</p>
+        <ul class="space-y-2 text-sm list-disc pl-5">
+          <li><strong>Droit d'accès :</strong> obtenir une copie de vos données personnelles</li>
+          <li><strong>Droit de rectification :</strong> corriger des données inexactes</li>
+          <li><strong>Droit à l'effacement :</strong> demander la suppression de vos données</li>
+          <li><strong>Droit à la portabilité :</strong> recevoir vos données dans un format structuré</li>
+          <li><strong>Droit d'opposition :</strong> vous opposer à certains traitements</li>
+          <li><strong>Droit à la limitation :</strong> demander la suspension d'un traitement</li>
+        </ul>
+        <p class="mt-3 text-sm">Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a>. Nous répondrons sous 30 jours.</p>
+        <p class="mt-2 text-sm">Vous pouvez également introduire une réclamation auprès de la <strong>CNIL</strong> (Commission Nationale de l'Informatique et des Libertés) : <span class="text-gray-600">cnil.fr</span></p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">7. Sécurité</h2>
+        <p class="text-sm">Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données : chiffrement des communications (HTTPS/TLS), hachage des mots de passe (bcrypt), accès restreint aux données, suppression automatique des fichiers temporaires.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">8. Cookies</h2>
+        <p class="text-sm">Le site utilise uniquement des cookies strictement nécessaires au fonctionnement du service (session d'authentification). Aucun cookie publicitaire ou de tracking tiers n'est utilisé.</p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">9. Contact</h2>
+        <p class="text-sm">Pour toute question relative à cette politique : <a href="mailto:contact@assistantai.fr" class="text-blue-600 hover:underline">contact@assistantai.fr</a></p>
+      </div>
+
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-gray-100 flex flex-wrap gap-4 text-sm text-gray-400">
+      <a href="/mentions-legales" class="hover:text-gray-700 transition-colors">Mentions légales</a>
+      <a href="/cgu" class="hover:text-gray-700 transition-colors">CGU</a>
+      <a href="/cgv" class="hover:text-gray-700 transition-colors">CGV</a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
