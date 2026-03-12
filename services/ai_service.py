@@ -27,6 +27,7 @@ from services.slots_service import (
     get_service_duration,
     parse_date_fr,
     format_slots_fr,
+    validate_date_day_consistency,
 )
 from services.sms_service import send_confirmation_sms, send_cancellation_sms
 from services.calendar_service import (
@@ -141,12 +142,14 @@ Le client a déjà dit bonjour. Tu enchaînes directement :
 9. Si le client confirme → crée avec create_reservation (inclus client_name) puis appelle end_call.{employee_instruction}
 
 RÈGLES IMPÉRATIVES:
+- TOUJOURS parler en français, sans exception. Jamais un mot en anglais.
 - Pose UNE SEULE question à la fois — c'est un appel vocal, sois bref.
 - N'invente aucun créneau — utilise toujours check_available_slots avant de proposer une heure.
 - Ne demande jamais le numéro de téléphone — tu le connais déjà.
 - Si le client dit "mardi" sans préciser la semaine, c'est TOUJOURS le prochain mardi.
 - Toujours répéter service + date + heure complète avant de créer le RDV.
 - Appelle end_call uniquement quand la réservation est confirmée ou la conversation terminée.
+- Si un outil retourne une erreur avec un champ "error", lis ce message au client mot pour mot.
 - Si un client pose une question sur le commerce, réponds avec les infos de la FAQ.{faq_block}"""
 
 
@@ -310,6 +313,11 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             phone = args["phone_number"]
             client = get_or_create_client(db, phone)
             reservations = get_upcoming_reservations(db, phone)
+            tz = pytz.timezone(settings.timezone)
+            def _localize_dt(dt):
+                if dt.tzinfo is None:
+                    dt = pytz.utc.localize(dt).astimezone(tz)
+                return dt.strftime("%Y-%m-%dT%H:%M")
             result = {
                 "name": client.name,
                 "total_reservations": client.total_reservations,
@@ -317,7 +325,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
                     {
                         "id": r.id,
                         "service": r.service_name,
-                        "datetime": r.appointment_dt.isoformat(),
+                        "datetime": _localize_dt(r.appointment_dt),
                         "status": str(r.status),
                         "employee": r.employee_name,
                     }
@@ -335,7 +343,11 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             }, ensure_ascii=False)
 
         elif tool_name == "check_available_slots":
-            date_str = parse_date_fr(args["date"]) or args["date"]
+            raw_date = args["date"]
+            date_str = parse_date_fr(raw_date) or raw_date
+            day_error = validate_date_day_consistency(raw_date, date_str)
+            if day_error:
+                return json.dumps({"error": day_error}, ensure_ascii=False)
             service = args["service_name"]
             duration = get_service_duration(service, business_id) or 30
             taken = get_taken_slots(db, date_str, business_id)
@@ -354,7 +366,11 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
         elif tool_name == "create_reservation":
             phone = args["phone_number"]
             service = args["service_name"]
-            date_str = parse_date_fr(args["date"]) or args["date"]
+            raw_date = args["date"]
+            date_str = parse_date_fr(raw_date) or raw_date
+            day_error = validate_date_day_consistency(raw_date, date_str)
+            if day_error:
+                return json.dumps({"error": day_error}, ensure_ascii=False)
             time_str = args["time"]
             client_name = args.get("client_name", "")
             employee_id = args.get("employee_id")

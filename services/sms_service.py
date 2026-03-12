@@ -89,10 +89,12 @@ def send_confirmation_sms(
 
     try:
         sid, token, from_num = _get_twilio_creds(business_id)
+        logger.info("[SMS] Envoi confirmation → to=%s from=%s sid=%s", to_number, from_num, sid[:8] if sid else None)
         TwilioClient(sid, token).messages.create(body=body, from_=from_num, to=to_number)
+        logger.info("[SMS] Confirmation envoyée à %s", to_number)
         return True
     except Exception as e:
-        logger.error("[SMS] Erreur envoi confirmation: %s", e)
+        logger.error("[SMS] Erreur envoi confirmation to=%s from=%s: %s", to_number, from_num if 'from_num' in dir() else '?', e)
         return False
 
 

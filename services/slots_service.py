@@ -166,6 +166,20 @@ def get_available_slots(
     return available
 
 
+DAY_NAMES_FR = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+MOIS_MAP = {
+    "janvier": 1, "février": 2, "mars": 3, "avril": 4,
+    "mai": 5, "juin": 6, "juillet": 7, "août": 8,
+    "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
+}
+
+DAY_NUM_MAP = {
+    "lundi": 0, "mardi": 1, "mercredi": 2, "jeudi": 3,
+    "vendredi": 4, "samedi": 5, "dimanche": 6,
+}
+
+
 def parse_date_fr(date_str: str) -> Optional[str]:
     """
     Tente de parser une date en français.
@@ -189,29 +203,12 @@ def parse_date_fr(date_str: str) -> Optional[str]:
     if date_str == "après-demain":
         return (today + timedelta(days=2)).strftime("%Y-%m-%d")
 
-    # "lundi", "mardi", etc. (prochain)
-    day_map = {
-        "lundi": 0, "mardi": 1, "mercredi": 2, "jeudi": 3,
-        "vendredi": 4, "samedi": 5, "dimanche": 6,
-    }
-    for day_name, day_num in day_map.items():
-        if day_name in date_str:
-            days_ahead = (day_num - today.weekday()) % 7
-            if days_ahead == 0:
-                days_ahead = 7  # prochain
-            return (today + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
-
-    # Format YYYY-MM-DD
+    # Format YYYY-MM-DD (priorité haute)
     if re.match(r"\d{4}-\d{2}-\d{2}", date_str):
         return date_str
 
-    # "15 mars" ou "15/03"
-    mois_map = {
-        "janvier": 1, "février": 2, "mars": 3, "avril": 4,
-        "mai": 5, "juin": 6, "juillet": 7, "août": 8,
-        "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
-    }
-    for mois_name, mois_num in mois_map.items():
+    # "15 mars" ou "lundi 15 mars" — la date spécifique prime sur le nom du jour
+    for mois_name, mois_num in MOIS_MAP.items():
         pattern = rf"(\d{{1,2}})\s+{mois_name}"
         m = re.search(pattern, date_str)
         if m:
@@ -224,6 +221,14 @@ def parse_date_fr(date_str: str) -> Optional[str]:
                 return d.strftime("%Y-%m-%d")
             except ValueError:
                 pass
+
+    # "lundi", "mardi", etc. (prochain) — seulement si pas de date spécifique
+    for day_name, day_num in DAY_NUM_MAP.items():
+        if day_name in date_str:
+            days_ahead = (day_num - today.weekday()) % 7
+            if days_ahead == 0:
+                days_ahead = 7  # prochain
+            return (today + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
 
     # "15/03" ou "15-03"
     m = re.match(r"(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{2,4}))?", date_str)
@@ -238,6 +243,48 @@ def parse_date_fr(date_str: str) -> Optional[str]:
         except ValueError:
             pass
 
+    return None
+
+
+def validate_date_day_consistency(date_str_input: str, resolved_date_str: str) -> Optional[str]:
+    """
+    Vérifie si un nom de jour dans date_str_input correspond au jour réel de resolved_date_str.
+    Retourne un message d'erreur si incohérent, None si ok.
+    Ex: "lundi 20 mai" mais 20 mai = mercredi → "Le 20 mai tombe un mercredi, pas un lundi."
+    """
+    import re
+    from datetime import date as date_type
+    date_str_lower = date_str_input.lower()
+
+    # Trouve si un nom de jour est présent
+    day_name_found = None
+    for day_name in DAY_NAMES_FR:
+        if day_name in date_str_lower:
+            day_name_found = day_name
+            break
+
+    # Trouve si une date spécifique (jour+mois) est aussi présente
+    has_specific_date = False
+    for mois_name in MOIS_MAP:
+        if re.search(rf"\d{{1,2}}\s+{mois_name}", date_str_lower):
+            has_specific_date = True
+            break
+
+    if not day_name_found or not has_specific_date:
+        return None  # Pas de conflit possible
+
+    try:
+        d = date_type.fromisoformat(resolved_date_str)
+        actual_day_name = DAY_NAMES_FR[d.weekday()]
+        if day_name_found != actual_day_name:
+            return (
+                f"Le {d.day} {[k for k,v in MOIS_MAP.items() if v == d.month][0]} "
+                f"tombe un {actual_day_name}, pas un {day_name_found}. "
+                f"Vouliez-vous dire le {actual_day_name} {d.day} "
+                f"{[k for k,v in MOIS_MAP.items() if v == d.month][0]} ?"
+            )
+    except Exception:
+        pass
     return None
 
 
