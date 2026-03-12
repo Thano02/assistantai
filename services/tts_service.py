@@ -26,6 +26,7 @@ def text_to_speech(text: str, voice_id: str = None) -> str:
     payload = {
         "text": text,
         "model_id": "eleven_turbo_v2_5",
+        "speed": 1.1,
         "voice_settings": {
             "stability": 0.5,
             "similarity_boost": 0.8,
