@@ -7,7 +7,7 @@
 
     <h1 class="text-5xl font-bold text-white mb-4">Simple et transparent</h1>
     <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-16">
-      Essayez sans risque. Si ça vous convient, continuez — sinon, rien.
+      Testez sans risque. Si ça vous convient, continuez — sinon, rien.
     </p>
 
     <!-- Deux étapes -->
@@ -16,7 +16,7 @@
       <!-- Étape 1 : essai -->
       <div class="bg-gray-900 border-2 border-blue-500 rounded-3xl p-10 flex-1 max-w-sm relative">
         <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-4 py-1 rounded-full tracking-wide">
-          ÉTAPE 1
+          ÉTAPE 1 — ESSAI
         </div>
         <div class="text-5xl mb-4">🚀</div>
         <div class="flex items-end justify-center gap-1 mb-2">
@@ -51,30 +51,30 @@
       <div class="text-gray-600 text-3xl font-light hidden sm:block">→</div>
       <div class="text-gray-600 text-3xl font-light sm:hidden">↓</div>
 
-      <!-- Étape 2 : abonnement -->
-      <div class="bg-gray-900 border border-gray-700 rounded-3xl p-10 flex-1 max-w-sm relative">
-        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 text-xs font-bold px-4 py-1 rounded-full tracking-wide">
-          ÉTAPE 2
+      <!-- Étape 2 : abonnement Pro -->
+      <div class="bg-gray-900 border-2 border-purple-500 rounded-3xl p-10 flex-1 max-w-sm relative">
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full tracking-wide">
+          ÉTAPE 2 — PRO
         </div>
         <div class="text-5xl mb-4">⚡</div>
-        <div class="flex items-end justify-center gap-1 mb-2">
-          <span class="text-6xl font-extrabold text-white">300€</span>
+        <div class="flex items-end justify-center gap-1 mb-1">
+          <span class="text-6xl font-extrabold text-white">349€</span>
           <span class="text-gray-400 text-lg mb-2">/mois</span>
         </div>
-        <p class="text-gray-300 font-semibold mb-1">Si vous êtes satisfait</p>
-        <p class="text-sm text-gray-500 mb-6">Prélevé automatiquement 7 jours<br>après le début de votre essai.</p>
+        <p class="text-purple-400 font-semibold mb-1">500 appels inclus</p>
+        <p class="text-sm text-gray-500 mb-6">Puis <span class="text-gray-300 font-semibold">0,20€/appel</span> supplémentaire.<br>Prélevé 7 jours après l'essai.</p>
         <ul class="space-y-2 text-left mb-8">
           {% for f in [
             "Robot vocal IA (GPT-4o + ElevenLabs)",
-            "Prise de RDV automatique 24/7",
-            "Gestion des tables (restaurant)",
-            "Multi-employés & planning",
+            "Prise de RDV automatique 24h/24 7j/7",
+            "SMS de confirmation & rappels",
             "Google Calendar + Outlook sync",
-            "FAQ automatique par profession",
+            "Dashboard & statistiques complets",
+            "Multi-employés & planning",
             "Résiliable à tout moment",
           ] %}
-          <li class="flex items-center gap-2 text-sm text-gray-400">
-            <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <li class="flex items-center gap-2 text-sm text-gray-300">
+            <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
             </svg>
             {{ f }}
@@ -88,22 +88,36 @@
 
     </div>
 
+    <!-- Bloc overage explication -->
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-2xl mx-auto mb-12 text-left">
+      <h3 class="text-white font-semibold mb-3">📞 Comment fonctionne la facturation des appels ?</h3>
+      <p class="text-sm text-gray-400 mb-3">
+        Votre abonnement Pro inclut <strong class="text-white">500 appels par mois</strong> — soit environ 16 appels par jour, largement suffisant pour la plupart des commerces.
+      </p>
+      <p class="text-sm text-gray-400 mb-3">
+        Si votre activité est intense et dépasse ce seuil, chaque appel supplémentaire est facturé <strong class="text-white">0,20€ HT</strong>. Vous êtes notifié par e-mail dès que vous approchez du seuil.
+      </p>
+      <p class="text-sm text-gray-500">
+        Exemple : 600 appels dans le mois → 349€ + (100 × 0,20€) = <strong class="text-gray-300">369€</strong> ce mois-là.
+      </p>
+    </div>
+
     <!-- Réassurance -->
     <div class="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
       <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
         <div class="text-2xl mb-2">🔒</div>
         <p class="text-sm font-semibold text-white mb-1">Paiement sécurisé</p>
-        <p class="text-xs text-gray-500">Via Stripe — carte bancaire CB, Visa, Mastercard</p>
+        <p class="text-xs text-gray-500">Via Stripe — CB, Visa, Mastercard</p>
       </div>
       <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
         <div class="text-2xl mb-2">❌</div>
         <p class="text-sm font-semibold text-white mb-1">Résiliable à tout moment</p>
-        <p class="text-xs text-gray-500">Depuis votre espace client Stripe, en 1 clic</p>
+        <p class="text-xs text-gray-500">Depuis votre espace client, en 1 clic</p>
       </div>
       <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 text-center">
         <div class="text-2xl mb-2">⚡</div>
         <p class="text-sm font-semibold text-white mb-1">Actif en quelques minutes</p>
-        <p class="text-xs text-gray-500">Configurez votre robot et commencez à recevoir des appels</p>
+        <p class="text-xs text-gray-500">Configurez et commencez à recevoir des appels</p>
       </div>
     </div>
 

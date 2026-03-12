@@ -77,6 +77,18 @@ def superadmin_business_detail(request: Request, bid: int, admin_id: int = Depen
             func.extract("year", UsageLog.created_at) == now.year,
         ).scalar() or 0.0
 
+        # Nombre d'appels ce mois (chaque appel = 1 entrée twilio_voice_min)
+        monthly_calls = db.query(func.count(UsageLog.id)).filter(
+            UsageLog.business_id == bid,
+            UsageLog.event_type == "twilio_voice_min",
+            func.extract("month", UsageLog.created_at) == now.month,
+            func.extract("year", UsageLog.created_at) == now.year,
+        ).scalar() or 0
+
+        included_calls = 500
+        overage_calls = max(0, monthly_calls - included_calls)
+        overage_eur = round(overage_calls * 0.20, 2)
+
         return templates.TemplateResponse(
             "superadmin/business_detail.html",
             {
@@ -84,7 +96,11 @@ def superadmin_business_detail(request: Request, bid: int, admin_id: int = Depen
                 "business": business,
                 "reservations_count": reservations_count,
                 "clients_count": clients_count,
-                "monthly_cost": round(monthly_cost, 2),
+                "monthly_cost": round(monthly_cost, 4),
+                "monthly_calls": monthly_calls,
+                "included_calls": included_calls,
+                "overage_calls": overage_calls,
+                "overage_eur": overage_eur,
             },
         )
     finally:

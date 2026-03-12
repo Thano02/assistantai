@@ -36,16 +36,39 @@
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
     <h2 class="font-semibold mb-4">Statistiques</h2>
     <dl class="space-y-3 text-sm">
-      {% for label, value in [
-        ("Réservations totales", reservations_count),
-        ("Clients uniques", clients_count),
-        ("Conso API ce mois", monthly_cost|string + " €"),
-      ] %}
       <div class="flex justify-between">
-        <dt class="text-gray-500">{{ label }}</dt>
-        <dd class="text-white font-bold">{{ value }}</dd>
+        <dt class="text-gray-500">Réservations totales</dt>
+        <dd class="text-white font-bold">{{ reservations_count }}</dd>
       </div>
-      {% endfor %}
+      <div class="flex justify-between">
+        <dt class="text-gray-500">Clients uniques</dt>
+        <dd class="text-white font-bold">{{ clients_count }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-gray-500">Conso API ce mois (mon coût)</dt>
+        <dd class="text-white font-bold">{{ monthly_cost }} €</dd>
+      </div>
+      <div class="border-t border-gray-800 pt-3 flex justify-between">
+        <dt class="text-gray-500">Appels ce mois</dt>
+        <dd class="font-bold {% if monthly_calls > included_calls %}text-orange-400{% else %}text-green-400{% endif %}">
+          {{ monthly_calls }} / {{ included_calls }} inclus
+        </dd>
+      </div>
+      {% if overage_calls > 0 %}
+      <div class="flex justify-between">
+        <dt class="text-gray-500">Appels en dépassement</dt>
+        <dd class="text-orange-400 font-bold">{{ overage_calls }} appels</dd>
+      </div>
+      <div class="flex justify-between bg-orange-900/30 border border-orange-700 rounded-lg px-3 py-2">
+        <dt class="text-orange-300 font-semibold">💰 À facturer au client</dt>
+        <dd class="text-orange-300 font-extrabold">+ {{ overage_eur }} €</dd>
+      </div>
+      {% else %}
+      <div class="flex justify-between">
+        <dt class="text-gray-500">Dépassement</dt>
+        <dd class="text-gray-500">Aucun</dd>
+      </div>
+      {% endif %}
     </dl>
   </div>
 
