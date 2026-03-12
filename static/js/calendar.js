@@ -17,10 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
     slotMinTime: '07:00:00',
     slotMaxTime: '21:00:00',
     slotDuration: '00:15:00',
-    slotLabelContent: function(arg) {
-      const h = arg.date.getHours();
-      const m = arg.date.getMinutes();
-      return h + 'h' + (m === 0 ? '00' : String(m).padStart(2, '0'));
+    slotLabelDidMount: function(arg) {
+      const d = arg.date;
+      const h = d.getHours();
+      const m = d.getMinutes();
+      arg.el.innerText = h + 'h' + String(m).padStart(2, '0');
     },
     nowIndicator: true,
     headerToolbar: {
