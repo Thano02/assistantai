@@ -55,6 +55,10 @@ class ConversationSession:
         self.should_hangup = False
         self.reservation_info: Optional[dict] = None
         self.created_at: float = __import__('time').time()
+        # Cached per-session to avoid DB query on every message
+        self.is_restaurant: bool = False
+        self.employee_selection_enabled_cache: bool = False
+        self.tools_ready: bool = False
 
 
 def get_session(call_sid: str, caller_phone: str, business_id: int | None = None) -> ConversationSession:
@@ -143,9 +147,11 @@ Le client a déjà dit bonjour. Tu enchaînes directement :
 
 RÈGLES IMPÉRATIVES:
 - TOUJOURS parler en français, sans exception. Jamais un mot en anglais.
-- Pose UNE SEULE question à la fois — c'est un appel vocal, sois bref.
+- Réponds en UNE SEULE phrase courte — c'est un appel vocal, sois ultra-bref.
+- Pose UNE SEULE question à la fois.
 - N'invente aucun créneau — utilise toujours check_available_slots avant de proposer une heure.
 - Ne demande jamais le numéro de téléphone — tu le connais déjà.
+- N'appelle JAMAIS get_client_info — les infos client sont déjà dans ce prompt.
 - Si le client dit "mardi" sans préciser la semaine, c'est TOUJOURS le prochain mardi.
 - Toujours répéter service + date + heure complète avant de créer le RDV.
 - Appelle end_call uniquement quand la réservation est confirmée ou la conversation terminée.
@@ -666,26 +672,39 @@ def process_speech(
         finally:
             db.close()
 
+        # Pré-injecter les infos client pour éviter un aller-retour get_client_info
+        try:
+            client_obj = get_or_create_client(db, caller_phone)
+            upcoming = get_upcoming_reservations(db, caller_phone)
+            tz_obj = pytz.timezone(settings.timezone)
+            def _loc(dt):
+                return pytz.utc.localize(dt).astimezone(tz_obj) if dt.tzinfo is None else dt.astimezone(tz_obj)
+            if upcoming:
+                rdv_lines = "; ".join(
+                    f"{r.service_name} le {_loc(r.appointment_dt).strftime('%d/%m à %H:%M')}"
+                    for r in upcoming[:3]
+                )
+                client_info_block = f"\nINFOS CLIENT: nom={client_obj.name or 'inconnu'}, RDV à venir: {rdv_lines}"
+            else:
+                client_info_block = f"\nINFOS CLIENT: nom={client_obj.name or 'inconnu'}, aucun RDV à venir"
+        except Exception:
+            client_info_block = ""
+
+        session.is_restaurant = profession_type == "restaurant"
+        session.employee_selection_enabled_cache = employee_selection_enabled
+
         system_prompt = _build_system_prompt(
             business_name, services_str, hours_str, address,
             faq_block, has_employees, employee_selection_enabled,
             ai_description, profession_type,
         )
-        session.messages.append({"role": "system", "content": system_prompt})
+        session.messages.append({"role": "system", "content": system_prompt + client_info_block})
+        session.tools_ready = True
 
     session.messages.append({"role": "user", "content": speech_text})
 
-    is_restaurant = False
-    employee_selection_enabled_runtime = False
-    if session.business_id:
-        db2 = SessionLocal()
-        try:
-            biz = get_business_by_id(db2, session.business_id)
-            if biz:
-                is_restaurant = biz.profession_type == "restaurant"
-                employee_selection_enabled_runtime = biz.employee_selection_enabled or False
-        finally:
-            db2.close()
+    is_restaurant = session.is_restaurant
+    employee_selection_enabled_runtime = session.employee_selection_enabled_cache
 
     if is_restaurant:
         tools = [t for t in BASE_TOOLS if t["function"]["name"] not in ("check_available_slots",)] + RESTAURANT_TOOLS

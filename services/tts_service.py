@@ -4,8 +4,12 @@ Génère un fichier audio MP3 et retourne l'URL publique pour Twilio.
 """
 import os
 import uuid
+import hashlib
 import httpx
 from config import settings
+
+# Cache: (text_hash, voice_id) → public_url — évite de re-générer les phrases répétées
+_tts_cache: dict[tuple, str] = {}
 
 
 def text_to_speech(text: str, voice_id: str = None) -> str:
@@ -14,10 +18,20 @@ def text_to_speech(text: str, voice_id: str = None) -> str:
     Retourne l'URL publique du fichier audio.
     voice_id : utilise la voix du business si fournie, sinon la voix globale.
     """
+    vid = voice_id or settings.elevenlabs_voice_id
+
+    # Retourne depuis le cache si l'audio existe déjà
+    cache_key = (hashlib.md5(text.encode()).hexdigest(), vid)
+    if cache_key in _tts_cache:
+        cached_url = _tts_cache[cache_key]
+        cached_path = os.path.join("static", "audio", cached_url.split("/")[-1])
+        if os.path.exists(cached_path):
+            return cached_url
+        else:
+            del _tts_cache[cache_key]
+
     filename = f"{uuid.uuid4().hex}.mp3"
     filepath = os.path.join("static", "audio", filename)
-
-    vid = voice_id or settings.elevenlabs_voice_id
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{vid}"
     headers = {
         "xi-api-key": settings.elevenlabs_api_key,
@@ -43,6 +57,7 @@ def text_to_speech(text: str, voice_id: str = None) -> str:
         f.write(response.content)
 
     public_url = f"{settings.base_url}/static/audio/{filename}"
+    _tts_cache[cache_key] = public_url
     return public_url
 
 

@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 GATHER_TIMEOUT = 5
-GATHER_SPEECH_TIMEOUT = 2
+GATHER_SPEECH_TIMEOUT = 1
 
 
 # ── TwiML helpers ──────────────────────────────────────────────────────────────
