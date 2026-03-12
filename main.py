@@ -12,6 +12,16 @@ from routers import web, auth_router, calendar_api
 from routers import superadmin, employees, subscriptions, demo
 
 
+def _run_migrations():
+    """Applique les migrations SQL manquantes."""
+    from database import engine
+    with engine.connect() as conn:
+        conn.execute(__import__('sqlalchemy').text(
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS email_verification_token_expiry TIMESTAMP;"
+        ))
+        conn.commit()
+
+
 def _create_superadmin_if_needed():
     """Crée le superadmin depuis SUPERADMIN_EMAIL + SUPERADMIN_PASSWORD si définis."""
     email = os.getenv("SUPERADMIN_EMAIL")
@@ -41,6 +51,7 @@ def _create_superadmin_if_needed():
 async def lifespan(app: FastAPI):
     # ── Startup ──
     init_db()
+    _run_migrations()
     _create_superadmin_if_needed()
     os.makedirs("static/audio", exist_ok=True)
     os.makedirs("static/css", exist_ok=True)
