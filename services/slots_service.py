@@ -288,13 +288,20 @@ def validate_date_day_consistency(date_str_input: str, resolved_date_str: str) -
     return None
 
 
+def format_time_fr(dt: datetime) -> str:
+    """Formate une heure sans zéro initial pour une bonne prononciation vocale.
+    Ex: 09:30 → '9h30', 14:00 → '14h00'
+    """
+    h = dt.hour
+    m = dt.minute
+    return f"{h}h{m:02d}"
+
+
 def format_slots_fr(slots: list[datetime]) -> str:
     """Formate une liste de créneaux en texte français."""
     if not slots:
         return "aucun créneau disponible"
-    parts = []
-    for slot in slots:
-        parts.append(slot.strftime("%Hh%M"))
+    parts = [format_time_fr(slot) for slot in slots]
     if len(parts) == 1:
         return parts[0]
     return ", ".join(parts[:-1]) + " ou " + parts[-1]

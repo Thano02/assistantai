@@ -27,6 +27,7 @@ from services.slots_service import (
     get_service_duration,
     parse_date_fr,
     format_slots_fr,
+    format_time_fr,
     validate_date_day_consistency,
 )
 from services.sms_service import send_confirmation_sms, send_cancellation_sms
@@ -88,7 +89,8 @@ def _build_system_prompt(business_name: str, services_list: str, hours_list: str
                           faq_block: str, has_employees: bool, employee_selection_enabled: bool,
                           ai_description: str = "", profession_type: str = "salon") -> str:
     tz = pytz.timezone(settings.timezone)
-    now_str = datetime.now(tz).strftime("%A %d %B %Y à %H:%M")
+    _now = datetime.now(tz)
+    now_str = f"{_now.strftime('%A %d %B %Y')} à {format_time_fr(_now)}"
 
     employee_instruction = ""
     if has_employees and employee_selection_enabled:
@@ -136,7 +138,7 @@ SCRIPT DE LA CONVERSATION - ÉTAPE PAR ÉTAPE:
 Le client a déjà dit bonjour. Tu enchaînes directement :
 1. Appelle get_client_info pour voir ses RDV existants.
    → Si son nom est inconnu (null ou vide), demande : "Pouvez-vous me donner votre prénom et votre nom ?"
-2. S'il confirme vouloir un RDV → demande quel SERVICE.
+2. S'il confirme vouloir un RDV → énumère les services disponibles et demande lequel il souhaite. Ex: "Nous proposons coupe homme, coupe femme et coloration. Lequel souhaitez-vous ?"
 3. Quand tu as le service → demande quel JOUR (ex: "Pour quel jour souhaitez-vous ?")
 4. Interprète les jours relatifs : "mardi" = le prochain mardi qui arrive, "demain" = demain, etc.
 5. Quand tu as le jour → demande à quelle HEURE (ex: "À quelle heure vous conviendrait-il ?")
@@ -147,7 +149,7 @@ Le client a déjà dit bonjour. Tu enchaînes directement :
 
 RÈGLES IMPÉRATIVES:
 - TOUJOURS parler en français, sans exception. Jamais un mot en anglais.
-- Réponds en UNE SEULE phrase courte — c'est un appel vocal, sois ultra-bref.
+- Réponds en 1 à 2 phrases maximum — c'est un appel vocal, sois bref.
 - Pose UNE SEULE question à la fois.
 - N'invente aucun créneau — utilise toujours check_available_slots avant de proposer une heure.
 - Ne demande jamais le numéro de téléphone — tu le connais déjà.
@@ -420,7 +422,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             # Store for email summary
             session.reservation_info = {
                 "service": service,
-                "datetime": appointment_dt.strftime("%d/%m/%Y à %H:%M"),
+                "datetime": f"{appointment_dt.strftime('%d/%m/%Y')} à {format_time_fr(appointment_dt)}",
                 "employee": employee_name or "",
             }
 
@@ -479,7 +481,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
 
             session.reservation_info = {
                 "service": res.service_name,
-                "datetime": new_dt.strftime("%d/%m/%Y à %H:%M"),
+                "datetime": f"{new_dt.strftime('%d/%m/%Y')} à {format_time_fr(new_dt)}",
                 "employee": res.employee_name or "",
             }
 
@@ -536,7 +538,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             send_confirmation_sms(phone, client_name, f"Table {table_name} ({party_size} pers.)", appointment_dt, reservation.id, business_id)
             session.reservation_info = {
                 "service": f"Table {table_name} pour {party_size} personnes",
-                "datetime": appointment_dt.strftime("%d/%m/%Y à %H:%M"),
+                "datetime": f"{appointment_dt.strftime('%d/%m/%Y')} à {format_time_fr(appointment_dt)}",
                 "employee": "",
             }
             return json.dumps({
@@ -681,7 +683,7 @@ def process_speech(
                 return pytz.utc.localize(dt).astimezone(tz_obj) if dt.tzinfo is None else dt.astimezone(tz_obj)
             if upcoming:
                 rdv_lines = "; ".join(
-                    f"{r.service_name} le {_loc(r.appointment_dt).strftime('%d/%m à %H:%M')}"
+                    f"{r.service_name} le {_loc(r.appointment_dt).strftime('%d/%m')} à {format_time_fr(_loc(r.appointment_dt))}"
                     for r in upcoming[:3]
                 )
                 client_info_block = f"\nINFOS CLIENT: nom={client_obj.name or 'inconnu'}, RDV à venir: {rdv_lines}"
@@ -787,7 +789,7 @@ def get_welcome_message(caller_phone: str, business_id: int | None = None) -> st
                 dt = pytz.utc.localize(dt).astimezone(tz)
             else:
                 dt = dt.astimezone(tz)
-            dt_str = f"{jours[dt.weekday()]} {dt.day} {mois[dt.month - 1]} à {dt.strftime('%H:%M')}"
+            dt_str = f"{jours[dt.weekday()]} {dt.day} {mois[dt.month - 1]} à {format_time_fr(dt)}"
             emp_str = f" avec {r.employee_name}" if r.employee_name else ""
             return (
                 f"{greeting} Bienvenue au {business_name}. "
