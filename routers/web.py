@@ -284,12 +284,31 @@ def client_settings_page(
             ("Anthony", "1EmYoP3UnnnwhlJKovEy", "Grave, rassurant — homme"),
         ]
         preset_voice_ids = [v[1] for v in preset_voices]
+        import json as _json
+        services_text = ""
+        if business.services_json:
+            try:
+                svcs = _json.loads(business.services_json)
+                services_text = "\n".join(
+                    f"{s['name']}, {s['duration']}, {s.get('price', '')}"
+                    for s in svcs
+                )
+            except Exception:
+                pass
+        hours_data = {}
+        if business.hours_json:
+            try:
+                hours_data = _json.loads(business.hours_json)
+            except Exception:
+                pass
         return templates.TemplateResponse("dashboard/client_settings.html", {
             "request": request,
             "business": business,
             "success": success,
             "preset_voices": preset_voices,
             "preset_voice_ids": preset_voice_ids,
+            "services_text": services_text,
+            "hours_data": hours_data,
             "page": "settings",
         })
     finally:
@@ -318,6 +337,8 @@ def client_settings_save(
     voice_id: str = Form(None),
     ai_description: str = Form(None),
     profession_type: str = Form(None),
+    address: str = Form(None),
+    twilio_phone: str = Form(None),
     business_id: int = Depends(get_current_business_id),
 ):
     from database import update_business
@@ -336,8 +357,57 @@ def client_settings_save(
             updates["ai_description"] = ai_description.strip() or None
         if profession_type:
             updates["profession_type"] = profession_type
+        if address is not None:
+            updates["address"] = address.strip() or None
+        if twilio_phone:
+            normalized = twilio_phone.strip().replace(" ", "").replace("-", "").replace(".", "")
+            updates["twilio_phone_number"] = normalized
         if updates:
             update_business(db, business_id, **updates)
+        return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)
+    finally:
+        db.close()
+
+
+@router.post("/dashboard/client-settings/config")
+async def client_settings_config_save(
+    request: Request,
+    business_id: int = Depends(get_current_business_id),
+):
+    import json as _json
+    from database import update_business
+    form = await request.form()
+    db = SessionLocal()
+    try:
+        updates = {}
+        update_type = form.get("update_type", "services")
+        if update_type == "services":
+            services_text = form.get("services_text", "")
+            services = []
+            for line in services_text.strip().splitlines():
+                parts = [p.strip() for p in line.split(",")]
+                if len(parts) >= 2:
+                    try:
+                        svc = {"name": parts[0], "duration": int(parts[1])}
+                        if len(parts) >= 3:
+                            try:
+                                svc["price"] = float(parts[2])
+                            except ValueError:
+                                pass
+                        services.append(svc)
+                    except ValueError:
+                        pass
+            updates["services_json"] = _json.dumps(services, ensure_ascii=False)
+        else:  # hours
+            days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+            hours_dict = {}
+            for day in days:
+                if form.get(f"open_{day}"):
+                    open_time = form.get(f"open_time_{day}", "09:00")
+                    close_time = form.get(f"close_time_{day}", "19:00")
+                    hours_dict[day] = {"open": open_time, "close": close_time}
+            updates["hours_json"] = _json.dumps(hours_dict, ensure_ascii=False)
+        update_business(db, business_id, **updates)
         return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)
     finally:
         db.close()

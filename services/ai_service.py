@@ -336,9 +336,9 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
         elif tool_name == "check_available_slots":
             date_str = parse_date_fr(args["date"]) or args["date"]
             service = args["service_name"]
-            duration = get_service_duration(service) or 30
-            taken = get_taken_slots(db, date_str)
-            slots = get_available_slots(taken, date_str, duration, max_slots=6)
+            duration = get_service_duration(service, business_id) or 30
+            taken = get_taken_slots(db, date_str, business_id)
+            slots = get_available_slots(taken, date_str, duration, business_id, max_slots=6)
             result = {
                 "date": date_str,
                 "service": service,
@@ -346,6 +346,8 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
                 "available_slots": [s.isoformat() for s in slots],
                 "available_slots_fr": format_slots_fr(slots),
             }
+            logger.info("[Slots] business_id=%s date=%s service=%s duration=%d taken=%d available=%d",
+                        business_id, date_str, service, duration, len(taken), len(slots))
             return json.dumps(result, ensure_ascii=False)
 
         elif tool_name == "create_reservation":
@@ -607,31 +609,38 @@ def process_speech(
                     employees = get_employees(db, business_id)
                     has_employees = len(employees) > 0
 
-            # Try loading legacy business_config.json for services/hours
-            try:
-                from config import load_business_config
-                bconfig = load_business_config()
+            # Load services and hours: DB config first, then fallback to business_config.json
+            import json as _json
+            from services.slots_service import _get_services_for_business, _get_hours_for_business
+            services_list = _get_services_for_business(business_id)
+            if services_list:
                 services_str = "\n".join(
-                    f"  - {s['name']} ({s['duration']} min, {s['price']}€)"
-                    for s in bconfig.get("services", [])
+                    f"  - {s['name']} ({s['duration']} min{', ' + str(s['price']) + '€' if s.get('price') else ''})"
+                    for s in services_list
                 )
-                days_fr = {
-                    "monday": "Lundi", "tuesday": "Mardi", "wednesday": "Mercredi",
-                    "thursday": "Jeudi", "friday": "Vendredi", "saturday": "Samedi", "sunday": "Dimanche",
-                }
+            hours_map = _get_hours_for_business(business_id)
+            days_fr = {
+                "monday": "Lundi", "tuesday": "Mardi", "wednesday": "Mercredi",
+                "thursday": "Jeudi", "friday": "Vendredi", "saturday": "Samedi", "sunday": "Dimanche",
+            }
+            if hours_map:
                 hours_lines = []
                 for day_en, day_fr in days_fr.items():
-                    h = bconfig.get("working_hours", {}).get(day_en)
+                    h = hours_map.get(day_en)
                     if h:
                         hours_lines.append(f"  {day_fr}: {h['open']} – {h['close']}")
                     else:
                         hours_lines.append(f"  {day_fr}: Fermé")
                 hours_str = "\n".join(hours_lines)
-                address = bconfig.get("address", "")
-                if not business_id:
-                    business_name = bconfig.get("name", business_name)
-            except Exception:
-                pass
+            # Address from DB or fallback
+            if business_id and business and business.address:
+                address = business.address
+            elif not address:
+                try:
+                    from config import load_business_config
+                    address = load_business_config().get("address", "")
+                except Exception:
+                    pass
 
         finally:
             db.close()

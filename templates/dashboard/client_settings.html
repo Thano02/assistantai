@@ -49,6 +49,71 @@
     </form>
   </div>
 
+  <!-- Adresse & Numéro Twilio -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-1">Adresse & Numéro Twilio</h2>
+    <p class="text-sm text-gray-500 mb-4">L'adresse est communiquée dans le SMS de confirmation. Le webhook Twilio doit pointer vers :<br>
+      <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">{{ base_url }}/voice/{{ business.id }}/incoming</code>
+    </p>
+    <form method="post" action="/dashboard/client-settings" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Adresse du commerce</label>
+        <input type="text" name="address" value="{{ business.address or '' }}"
+          placeholder="12 Rue de la Paix, 75001 Paris"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Numéro Twilio</label>
+        <input type="text" name="twilio_phone" value="{{ business.twilio_phone_number or '' }}"
+          placeholder="+33XXXXXXXXX"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder
+      </button>
+    </form>
+  </div>
+
+  <!-- Services proposés -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-1">Services proposés</h2>
+    <p class="text-sm text-gray-500 mb-4">Un service par ligne : <strong>Nom, durée en minutes, prix en €</strong></p>
+    <form method="post" action="/dashboard/client-settings/config" class="space-y-4">
+      <input type="hidden" name="update_type" value="services">
+      <textarea name="services_text" rows="7"
+        placeholder="Coupe homme, 30, 25&#10;Coupe femme, 60, 45&#10;Coloration, 120, 85"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary resize-none">{{ services_text or '' }}</textarea>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder les services
+      </button>
+    </form>
+  </div>
+
+  <!-- Horaires d'ouverture -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-4">Horaires d'ouverture</h2>
+    <form method="post" action="/dashboard/client-settings/config" class="space-y-3">
+      <input type="hidden" name="update_type" value="hours">
+      {% for day_en, day_fr in [('monday','Lundi'),('tuesday','Mardi'),('wednesday','Mercredi'),('thursday','Jeudi'),('friday','Vendredi'),('saturday','Samedi'),('sunday','Dimanche')] %}
+      {% set h = hours_data.get(day_en) if hours_data else none %}
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-700 w-24 font-medium">{{ day_fr }}</span>
+        <input type="checkbox" name="open_{{ day_en }}" id="open_{{ day_en }}"
+          {{ 'checked' if h }} class="rounded w-4 h-4">
+        <label for="open_{{ day_en }}" class="text-sm text-gray-500 w-12">Ouvert</label>
+        <input type="time" name="open_time_{{ day_en }}" value="{{ h.open if h else '09:00' }}"
+          class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary">
+        <span class="text-gray-400">→</span>
+        <input type="time" name="close_time_{{ day_en }}" value="{{ h.close if h else '19:00' }}"
+          class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      {% endfor %}
+      <button type="submit" class="mt-2 bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder les horaires
+      </button>
+    </form>
+  </div>
+
   <!-- Description pour le robot IA -->
   <div class="bg-white rounded-xl border border-gray-200 p-6">
     <h2 class="font-semibold text-gray-900 mb-1">Description pour le robot</h2>

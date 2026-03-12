@@ -24,15 +24,57 @@ DAY_NAMES_EN = [
 ]
 
 
-def get_service_duration(service_name: str) -> Optional[int]:
+def _get_services_for_business(business_id: Optional[int]) -> list:
+    """Retourne la liste des services : depuis la DB si business_id, sinon business_config.json."""
+    if business_id:
+        try:
+            import json as _json
+            from database import SessionLocal, get_business_by_id
+            db = SessionLocal()
+            try:
+                business = get_business_by_id(db, business_id)
+                if business and business.services_json:
+                    return _json.loads(business.services_json)
+            finally:
+                db.close()
+        except Exception:
+            pass
+    try:
+        return load_business_config().get("services", [])
+    except Exception:
+        return []
+
+
+def _get_hours_for_business(business_id: Optional[int]) -> dict:
+    """Retourne les horaires : depuis la DB si business_id, sinon business_config.json."""
+    if business_id:
+        try:
+            import json as _json
+            from database import SessionLocal, get_business_by_id
+            db = SessionLocal()
+            try:
+                business = get_business_by_id(db, business_id)
+                if business and business.hours_json:
+                    return _json.loads(business.hours_json)
+            finally:
+                db.close()
+        except Exception:
+            pass
+    try:
+        return load_business_config().get("working_hours", {})
+    except Exception:
+        return {}
+
+
+def get_service_duration(service_name: str, business_id: Optional[int] = None) -> Optional[int]:
     """Retourne la durée en minutes d'un service, ou None si inconnu."""
-    config = load_business_config()
+    services = _get_services_for_business(business_id)
     name_lower = service_name.lower().strip()
-    for svc in config["services"]:
+    for svc in services:
         if svc["name"].lower() == name_lower:
             return svc["duration"]
     # Fuzzy match
-    for svc in config["services"]:
+    for svc in services:
         if name_lower in svc["name"].lower() or svc["name"].lower() in name_lower:
             return svc["duration"]
     return None
@@ -42,6 +84,7 @@ def get_available_slots(
     taken_slots: list[tuple[datetime, int]],
     target_date_str: str,
     duration_minutes: int,
+    business_id: Optional[int] = None,
     max_slots: int = 8,
 ) -> list[datetime]:
     """
@@ -51,25 +94,30 @@ def get_available_slots(
         taken_slots: liste de (start_datetime, duration_minutes) déjà pris
         target_date_str: date au format YYYY-MM-DD
         duration_minutes: durée du service souhaité
+        business_id: si fourni, charge les horaires depuis la DB
         max_slots: nombre max de créneaux à retourner
 
     Returns:
         liste de datetime représentant les créneaux libres
     """
-    config = load_business_config()
     tz = pytz.timezone(settings.timezone)
 
     target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
     day_en = DAY_NAMES_EN[target_date.weekday()]
 
-    hours = config["working_hours"].get(day_en)
+    working_hours = _get_hours_for_business(business_id)
+    hours = working_hours.get(day_en)
     if not hours:
         return []  # Fermé ce jour
 
     open_h, open_m = map(int, hours["open"].split(":"))
     close_h, close_m = map(int, hours["close"].split(":"))
 
-    interval = config.get("slot_interval_minutes", 15)
+    try:
+        config = load_business_config()
+        interval = config.get("slot_interval_minutes", 15)
+    except Exception:
+        interval = 15
 
     slot_start = datetime.combine(target_date, datetime.min.time()).replace(
         hour=open_h, minute=open_m, second=0, microsecond=0

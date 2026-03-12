@@ -77,6 +77,11 @@ class Business(Base):
     # "ask" = robot propose le choix | "auto" = premier disponible
     employee_selection_enabled = Column(Boolean, default=False)
 
+    # Services et horaires (JSON) — si null, fallback sur business_config.json global
+    services_json = Column(Text, nullable=True)   # [{"name":"...", "duration":30, "price":25}]
+    hours_json = Column(Text, nullable=True)       # {"monday":{"open":"09:00","close":"19:00"}, ...}
+    address = Column(String(300), nullable=True)
+
 
 class OAuthState(Base):
     """Stockage des states OAuth (remplace le dict en mémoire)."""
@@ -245,6 +250,9 @@ def _run_migrations():
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT NOW()
         )""",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS services_json TEXT",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS hours_json TEXT",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS address VARCHAR(300)",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -473,22 +481,20 @@ def get_table_reservations_today(db: Session, business_id: int) -> list:
             .all())
 
 
-def get_taken_slots(db: Session, date_str: str) -> list[tuple[datetime, int]]:
+def get_taken_slots(db: Session, date_str: str, business_id: int | None = None) -> list[tuple[datetime, int]]:
     """Returns list of (start_datetime, duration_minutes) for confirmed reservations on a date."""
     from datetime import date
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     day_start = datetime.combine(target_date, datetime.min.time())
     day_end = datetime.combine(target_date, datetime.max.time())
-    reservations = (
-        db.query(Reservation)
-        .filter(
-            Reservation.appointment_dt >= day_start,
-            Reservation.appointment_dt <= day_end,
-            Reservation.status == ReservationStatus.CONFIRMED,
-        )
-        .all()
+    query = db.query(Reservation).filter(
+        Reservation.appointment_dt >= day_start,
+        Reservation.appointment_dt <= day_end,
+        Reservation.status == ReservationStatus.CONFIRMED,
     )
-    return [(r.appointment_dt, r.duration_minutes) for r in reservations]
+    if business_id:
+        query = query.filter(Reservation.business_id == business_id)
+    return [(r.appointment_dt, r.duration_minutes) for r in query.all()]
 
 
 def mark_reminder_sent(db: Session, reservation_id: int):

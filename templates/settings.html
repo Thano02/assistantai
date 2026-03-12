@@ -42,6 +42,51 @@
     </form>
   </div>
 
+  <!-- Services & Horaires -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-semibold text-gray-900 mb-1">Services & Horaires</h2>
+    <p class="text-sm text-gray-500 mb-5">Ces informations sont utilisées par le robot pour proposer des créneaux.</p>
+    <form method="post" action="/dashboard/settings/config" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Adresse du commerce</label>
+        <input type="text" name="address" value="{{ business.address or '' }}"
+          placeholder="12 Rue de la Paix, 75001 Paris"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+          Services proposés
+          <span class="text-gray-400 font-normal">(un par ligne : Nom, durée en minutes, prix en €)</span>
+        </label>
+        <textarea name="services_text" rows="6"
+          placeholder="Coupe homme, 30, 25&#10;Coupe femme, 60, 45&#10;Coloration, 120, 85"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary">{{ services_text or '' }}</textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Horaires d'ouverture</label>
+        <div class="space-y-2">
+          {% for day_en, day_fr in [('monday','Lundi'),('tuesday','Mardi'),('wednesday','Mercredi'),('thursday','Jeudi'),('friday','Vendredi'),('saturday','Samedi'),('sunday','Dimanche')] %}
+          {% set h = hours_data.get(day_en) if hours_data else none %}
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-600 w-24">{{ day_fr }}</span>
+            <input type="checkbox" name="open_{{ day_en }}" id="open_{{ day_en }}"
+              {{ 'checked' if h }} class="rounded">
+            <label for="open_{{ day_en }}" class="text-sm text-gray-500 mr-2">Ouvert</label>
+            <input type="time" name="open_time_{{ day_en }}" value="{{ h.open if h else '09:00' }}"
+              class="border border-gray-300 rounded px-2 py-1 text-sm w-28">
+            <span class="text-gray-400 text-sm">→</span>
+            <input type="time" name="close_time_{{ day_en }}" value="{{ h.close if h else '19:00' }}"
+              class="border border-gray-300 rounded px-2 py-1 text-sm w-28">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Sauvegarder services & horaires
+      </button>
+    </form>
+  </div>
+
   <!-- Twilio -->
   <div class="bg-white rounded-xl border border-gray-200 p-6">
     <h2 class="font-semibold text-gray-900 mb-2">Configuration Twilio</h2>
