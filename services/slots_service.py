@@ -110,24 +110,19 @@ def get_available_slots(
     if not hours:
         return []  # Fermé ce jour
 
-    open_h, open_m = map(int, hours["open"].split(":"))
-    close_h, close_m = map(int, hours["close"].split(":"))
+    # Support multi-créneaux : {"slots": [...]} ou ancien format {"open": ..., "close": ...}
+    if "slots" in hours:
+        slots_def = hours["slots"]
+    elif "open" in hours:
+        slots_def = [{"open": hours["open"], "close": hours["close"]}]
+    else:
+        return []
 
     try:
         config = load_business_config()
         interval = config.get("slot_interval_minutes", 15)
     except Exception:
         interval = 15
-
-    slot_start = datetime.combine(target_date, datetime.min.time()).replace(
-        hour=open_h, minute=open_m, second=0, microsecond=0
-    )
-    slot_start = tz.localize(slot_start)
-
-    day_end = datetime.combine(target_date, datetime.min.time()).replace(
-        hour=close_h, minute=close_m, second=0, microsecond=0
-    )
-    day_end = tz.localize(day_end)
 
     now = datetime.now(tz)
 
@@ -141,25 +136,32 @@ def get_available_slots(
         taken.append((start, dur))
 
     available = []
-    current = slot_start
 
-    while current + timedelta(minutes=duration_minutes) <= day_end:
-        # Pas dans le passé
-        if current > now:
-            slot_end = current + timedelta(minutes=duration_minutes)
-            conflict = False
-            for (taken_start, taken_dur) in taken:
-                taken_end = taken_start + timedelta(minutes=taken_dur)
-                # Vérif chevauchement
-                if not (slot_end <= taken_start or current >= taken_end):
-                    conflict = True
-                    break
-            if not conflict:
-                available.append(current)
-                if len(available) >= max_slots:
-                    break
+    for slot_def in slots_def:
+        open_h, open_m = map(int, slot_def["open"].split(":"))
+        close_h, close_m = map(int, slot_def["close"].split(":"))
 
-        current += timedelta(minutes=interval)
+        current = tz.localize(datetime.combine(target_date, datetime.min.time()).replace(
+            hour=open_h, minute=open_m, second=0, microsecond=0
+        ))
+        window_end = tz.localize(datetime.combine(target_date, datetime.min.time()).replace(
+            hour=close_h, minute=close_m, second=0, microsecond=0
+        ))
+
+        while current + timedelta(minutes=duration_minutes) <= window_end:
+            if current > now:
+                slot_end = current + timedelta(minutes=duration_minutes)
+                conflict = False
+                for (taken_start, taken_dur) in taken:
+                    taken_end = taken_start + timedelta(minutes=taken_dur)
+                    if not (slot_end <= taken_start or current >= taken_end):
+                        conflict = True
+                        break
+                if not conflict:
+                    available.append(current)
+                    if len(available) >= max_slots:
+                        return available
+            current += timedelta(minutes=interval)
 
     return available
 

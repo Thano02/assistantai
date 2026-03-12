@@ -92,20 +92,52 @@
   <!-- Horaires d'ouverture -->
   <div class="bg-white rounded-xl border border-gray-200 p-6">
     <h2 class="font-semibold text-gray-900 mb-4">Horaires d'ouverture</h2>
-    <form method="post" action="/dashboard/client-settings/config" class="space-y-3">
+    <form method="post" action="/dashboard/client-settings/config" class="space-y-4">
       <input type="hidden" name="update_type" value="hours">
       {% for day_en, day_fr in [('monday','Lundi'),('tuesday','Mardi'),('wednesday','Mercredi'),('thursday','Jeudi'),('friday','Vendredi'),('saturday','Samedi'),('sunday','Dimanche')] %}
       {% set h = hours_data.get(day_en) if hours_data else none %}
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-700 w-24 font-medium">{{ day_fr }}</span>
-        <input type="checkbox" name="open_{{ day_en }}" id="open_{{ day_en }}"
-          {{ 'checked' if h }} class="rounded w-4 h-4">
-        <label for="open_{{ day_en }}" class="text-sm text-gray-500 w-12">Ouvert</label>
-        <input type="time" name="open_time_{{ day_en }}" value="{{ h.open if h else '09:00' }}"
-          class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary">
-        <span class="text-gray-400">→</span>
-        <input type="time" name="close_time_{{ day_en }}" value="{{ h.close if h else '19:00' }}"
-          class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary">
+      {% if h and h.slots is defined %}
+        {% set existing_slots = h.slots %}
+      {% elif h and h.open is defined %}
+        {% set existing_slots = [{"open": h.open, "close": h.close}] %}
+      {% else %}
+        {% set existing_slots = [] %}
+      {% endif %}
+      <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+        <div class="flex items-center gap-3 mb-2">
+          <input type="checkbox" name="open_{{ day_en }}" id="open_{{ day_en }}"
+            {{ 'checked' if h }} onchange="toggleDay('{{ day_en }}', this.checked)"
+            class="rounded w-4 h-4 cursor-pointer">
+          <label for="open_{{ day_en }}" class="text-sm font-semibold text-gray-800 w-24 cursor-pointer">{{ day_fr }}</label>
+          <button type="button" onclick="addSlot('{{ day_en }}')"
+            class="ml-auto text-xs text-primary border border-primary rounded-lg px-2 py-1 hover:bg-blue-50 transition-colors">
+            + Ajouter une pause
+          </button>
+        </div>
+        <div id="slots_{{ day_en }}" class="{{ '' if h else 'opacity-40 pointer-events-none' }} space-y-2">
+          {% if existing_slots %}
+            {% for slot in existing_slots %}
+            <div class="slot-row flex items-center gap-2">
+              <input type="time" name="slot_{{ day_en }}_{{ loop.index0 }}_open" value="{{ slot.open }}"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+              <span class="text-gray-400 text-sm">→</span>
+              <input type="time" name="slot_{{ day_en }}_{{ loop.index0 }}_close" value="{{ slot.close }}"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+              {% if loop.index0 > 0 %}
+              <button type="button" onclick="removeSlot(this)" class="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="slot-row flex items-center gap-2">
+              <input type="time" name="slot_{{ day_en }}_0_open" value="09:00"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+              <span class="text-gray-400 text-sm">→</span>
+              <input type="time" name="slot_{{ day_en }}_0_close" value="19:00"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+            </div>
+          {% endif %}
+        </div>
       </div>
       {% endfor %}
       <button type="submit" class="mt-2 bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
@@ -113,6 +145,52 @@
       </button>
     </form>
   </div>
+
+  <script>
+  function toggleDay(day, open) {
+    const container = document.getElementById('slots_' + day);
+    if (open) {
+      container.classList.remove('opacity-40', 'pointer-events-none');
+    } else {
+      container.classList.add('opacity-40', 'pointer-events-none');
+    }
+  }
+
+  function addSlot(day) {
+    const container = document.getElementById('slots_' + day);
+    const rows = container.querySelectorAll('.slot-row');
+    const idx = rows.length;
+    const div = document.createElement('div');
+    div.className = 'slot-row flex items-center gap-2';
+    div.innerHTML = `
+      <input type="time" name="slot_${day}_${idx}_open" value="18:00"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+      <span class="text-gray-400 text-sm">→</span>
+      <input type="time" name="slot_${day}_${idx}_close" value="23:00"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+      <button type="button" onclick="removeSlot(this)" class="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+    `;
+    container.appendChild(div);
+    reindexSlots(day);
+  }
+
+  function removeSlot(btn) {
+    const row = btn.closest('.slot-row');
+    const container = row.parentElement;
+    const day = container.id.replace('slots_', '');
+    row.remove();
+    reindexSlots(day);
+  }
+
+  function reindexSlots(day) {
+    const container = document.getElementById('slots_' + day);
+    container.querySelectorAll('.slot-row').forEach((row, i) => {
+      row.querySelectorAll('input[type=time]').forEach(inp => {
+        inp.name = inp.name.replace(/slot_[^_]+_\d+_/, `slot_${day}_${i}_`);
+      });
+    });
+  }
+  </script>
 
   <!-- Description pour le robot IA -->
   <div class="bg-white rounded-xl border border-gray-200 p-6">

@@ -403,9 +403,19 @@ async def client_settings_config_save(
             hours_dict = {}
             for day in days:
                 if form.get(f"open_{day}"):
-                    open_time = form.get(f"open_time_{day}", "09:00")
-                    close_time = form.get(f"close_time_{day}", "19:00")
-                    hours_dict[day] = {"open": open_time, "close": close_time}
+                    slots = []
+                    i = 0
+                    while True:
+                        o = form.get(f"slot_{day}_{i}_open")
+                        c = form.get(f"slot_{day}_{i}_close")
+                        if o is None:
+                            break
+                        if o and c:
+                            slots.append({"open": o, "close": c})
+                        i += 1
+                    if not slots:
+                        slots = [{"open": "09:00", "close": "19:00"}]
+                    hours_dict[day] = {"slots": slots}
             updates["hours_json"] = _json.dumps(hours_dict, ensure_ascii=False)
         update_business(db, business_id, **updates)
         return RedirectResponse(url="/dashboard/client-settings?success=saved", status_code=303)

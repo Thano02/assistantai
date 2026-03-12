@@ -629,7 +629,11 @@ def process_speech(
                 for day_en, day_fr in days_fr.items():
                     h = hours_map.get(day_en)
                     if h:
-                        hours_lines.append(f"  {day_fr}: {h['open']} – {h['close']}")
+                        if "slots" in h:
+                            slots_str = " / ".join(f"{s['open']}–{s['close']}" for s in h["slots"])
+                        else:
+                            slots_str = f"{h['open']}–{h['close']}"
+                        hours_lines.append(f"  {day_fr}: {slots_str}")
                     else:
                         hours_lines.append(f"  {day_fr}: Fermé")
                 hours_str = "\n".join(hours_lines)
