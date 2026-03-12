@@ -18,7 +18,6 @@ def text_to_speech(text: str, voice_id: str = None) -> str:
     filepath = os.path.join("static", "audio", filename)
 
     vid = voice_id or settings.elevenlabs_voice_id
-    print(f"[TTS] voice_id_param={voice_id!r} → using vid={vid!r}", flush=True)
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{vid}"
     headers = {
         "xi-api-key": settings.elevenlabs_api_key,
@@ -26,7 +25,7 @@ def text_to_speech(text: str, voice_id: str = None) -> str:
     }
     payload = {
         "text": text,
-        "model_id": "eleven_multilingual_v2",
+        "model_id": "eleven_turbo_v2_5",
         "voice_settings": {
             "stability": 0.5,
             "similarity_boost": 0.8,

@@ -130,19 +130,20 @@ HORAIRES D'OUVERTURE:
 SCRIPT DE LA CONVERSATION - ÉTAPE PAR ÉTAPE:
 Le client a déjà dit bonjour. Tu enchaînes directement :
 1. Appelle get_client_info pour voir ses RDV existants.
+   → Si son nom est inconnu (null ou vide), demande : "Pouvez-vous me donner votre prénom et votre nom ?"
 2. S'il confirme vouloir un RDV → demande quel SERVICE.
 3. Quand tu as le service → demande quel JOUR (ex: "Pour quel jour souhaitez-vous ?")
 4. Interprète les jours relatifs : "mardi" = le prochain mardi qui arrive, "demain" = demain, etc.
 5. Quand tu as le jour → demande à quelle HEURE (ex: "À quelle heure vous conviendrait-il ?")
 6. Quand tu as l'heure → vérifie avec check_available_slots.
-7. Si disponible → dis : "Parfait, je vous confirme un RDV [service] le [jour] à [heure]. C'est bien ça ?"
-8. Si le client confirme → crée avec create_reservation puis appelle end_call.
+7. Si disponible → dis : "Parfait, je vous confirme un RDV [service] le [jour] à [heure] au nom de [prénom nom]. C'est bien ça ?"
+8. Si le client confirme → crée avec create_reservation (inclus client_name) puis appelle end_call.
 9. Si non disponible → propose les 2-3 créneaux libres les plus proches.{employee_instruction}
 
 RÈGLES IMPÉRATIVES:
 - Pose UNE SEULE question à la fois — c'est un appel vocal, sois bref.
 - N'invente aucun créneau — utilise toujours check_available_slots avant de proposer une heure.
-- Ne demande jamais le nom ou le numéro de téléphone — tu les connais déjà.
+- Ne demande jamais le numéro de téléphone — tu le connais déjà.
 - Si le client dit "mardi" sans préciser la semaine, c'est TOUJOURS le prochain mardi.
 - Toujours répéter service + date + heure complète avant de créer le RDV.
 - Appelle end_call uniquement quand la réservation est confirmée ou la conversation terminée.
@@ -654,31 +655,29 @@ def process_speech(
 
     session.messages.append({"role": "user", "content": speech_text})
 
-    db2 = SessionLocal()
-    try:
-        biz = get_business_by_id(db2, session.business_id) if session.business_id else None
-        is_restaurant = biz and biz.profession_type == "restaurant"
-    finally:
-        db2.close()
+    is_restaurant = False
+    employee_selection_enabled_runtime = False
+    if session.business_id:
+        db2 = SessionLocal()
+        try:
+            biz = get_business_by_id(db2, session.business_id)
+            if biz:
+                is_restaurant = biz.profession_type == "restaurant"
+                employee_selection_enabled_runtime = biz.employee_selection_enabled or False
+        finally:
+            db2.close()
 
     if is_restaurant:
-        # Restaurant: remplace les outils d'appointment par les outils table
         tools = [t for t in BASE_TOOLS if t["function"]["name"] not in ("check_available_slots",)] + RESTAURANT_TOOLS
     else:
         tools = BASE_TOOLS.copy()
-        if session.business_id:
-            db2b = SessionLocal()
-            try:
-                business = get_business_by_id(db2b, session.business_id)
-                if business and business.employee_selection_enabled:
-                    tools.append(EMPLOYEE_TOOL)
-            finally:
-                db2b.close()
+        if employee_selection_enabled_runtime:
+            tools.append(EMPLOYEE_TOOL)
 
-    # GPT-4o loop
+    # GPT-4o-mini loop (faster, lower latency)
     for _ in range(5):
         response = client_ai.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=session.messages,
             tools=tools,
             tool_choice="auto",
