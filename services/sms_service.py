@@ -4,13 +4,50 @@ Envoi de confirmations et rappels de rendez-vous.
 """
 from twilio.rest import Client as TwilioClient
 from config import settings
-from config import load_business_config
 from datetime import datetime
+from typing import Optional
 import pytz
+from utils import get_logger
+
+logger = get_logger(__name__)
 
 
-def _twilio_client() -> TwilioClient:
-    return TwilioClient(settings.twilio_account_sid, settings.twilio_auth_token)
+def _get_twilio_creds(business_id: Optional[int]) -> tuple[str, str, str]:
+    """Retourne (account_sid, auth_token, from_number) pour un business ou les creds globales."""
+    if business_id:
+        try:
+            from database import SessionLocal, get_business_by_id
+            db = SessionLocal()
+            try:
+                biz = get_business_by_id(db, business_id)
+                if biz and biz.twilio_account_sid and biz.twilio_auth_token and biz.twilio_phone_number:
+                    return biz.twilio_account_sid, biz.twilio_auth_token, biz.twilio_phone_number
+            finally:
+                db.close()
+        except Exception:
+            pass
+    return settings.twilio_account_sid, settings.twilio_auth_token, settings.twilio_phone_number
+
+
+def _get_business_address(business_id: Optional[int]) -> str:
+    """Retourne l'adresse du business depuis la DB ou le config global."""
+    if business_id:
+        try:
+            from database import SessionLocal, get_business_by_id
+            db = SessionLocal()
+            try:
+                biz = get_business_by_id(db, business_id)
+                if biz and biz.address:
+                    return biz.address
+            finally:
+                db.close()
+        except Exception:
+            pass
+    try:
+        from config import load_business_config
+        return load_business_config().get("address", "")
+    except Exception:
+        return ""
 
 
 def format_dt_fr(dt: datetime) -> str:
@@ -35,29 +72,27 @@ def send_confirmation_sms(
     service_name: str,
     appointment_dt: datetime,
     reservation_id: int,
+    business_id: Optional[int] = None,
 ) -> bool:
     """Envoie un SMS de confirmation après réservation."""
-    business = load_business_config()
     dt_str = format_dt_fr(appointment_dt)
+    address = _get_business_address(business_id)
 
     body = (
         f"✅ RDV confirmé !\n"
         f"📋 {service_name}\n"
         f"📅 {dt_str}\n"
-        f"📍 {business['address']}\n\n"
-        f"Pour annuler, répondez : ANNULER {reservation_id}"
     )
+    if address:
+        body += f"📍 {address}\n"
+    body += f"\nPour annuler, répondez : ANNULER {reservation_id}"
 
     try:
-        client = _twilio_client()
-        client.messages.create(
-            body=body,
-            from_=settings.twilio_phone_number,
-            to=to_number,
-        )
+        sid, token, from_num = _get_twilio_creds(business_id)
+        TwilioClient(sid, token).messages.create(body=body, from_=from_num, to=to_number)
         return True
     except Exception as e:
-        print(f"[SMS] Erreur envoi confirmation: {e}")
+        logger.error("[SMS] Erreur envoi confirmation: %s", e)
         return False
 
 
@@ -67,29 +102,27 @@ def send_reminder_sms(
     service_name: str,
     appointment_dt: datetime,
     reservation_id: int,
+    business_id: Optional[int] = None,
 ) -> bool:
     """Envoie un SMS de rappel 24h avant le RDV."""
-    business = load_business_config()
     dt_str = format_dt_fr(appointment_dt)
+    address = _get_business_address(business_id)
 
     body = (
         f"⏰ Rappel RDV demain !\n"
         f"📋 {service_name}\n"
         f"📅 {dt_str}\n"
-        f"📍 {business['address']}\n\n"
-        f"Pour annuler, répondez : ANNULER {reservation_id}"
     )
+    if address:
+        body += f"📍 {address}\n"
+    body += f"\nPour annuler, répondez : ANNULER {reservation_id}"
 
     try:
-        client = _twilio_client()
-        client.messages.create(
-            body=body,
-            from_=settings.twilio_phone_number,
-            to=to_number,
-        )
+        sid, token, from_num = _get_twilio_creds(business_id)
+        TwilioClient(sid, token).messages.create(body=body, from_=from_num, to=to_number)
         return True
     except Exception as e:
-        print(f"[SMS] Erreur envoi rappel: {e}")
+        logger.error("[SMS] Erreur envoi rappel: %s", e)
         return False
 
 
@@ -97,6 +130,7 @@ def send_cancellation_sms(
     to_number: str,
     service_name: str,
     appointment_dt: datetime,
+    business_id: Optional[int] = None,
 ) -> bool:
     """Envoie un SMS de confirmation d'annulation."""
     dt_str = format_dt_fr(appointment_dt)
@@ -106,13 +140,9 @@ def send_cancellation_sms(
         f"Pour reprendre RDV, appelez-nous !"
     )
     try:
-        client = _twilio_client()
-        client.messages.create(
-            body=body,
-            from_=settings.twilio_phone_number,
-            to=to_number,
-        )
+        sid, token, from_num = _get_twilio_creds(business_id)
+        TwilioClient(sid, token).messages.create(body=body, from_=from_num, to=to_number)
         return True
     except Exception as e:
-        print(f"[SMS] Erreur envoi annulation: {e}")
+        logger.error("[SMS] Erreur envoi annulation: %s", e)
         return False

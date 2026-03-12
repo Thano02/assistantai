@@ -137,8 +137,8 @@
       {% endif %}
     </div>
     <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between">
-      <span class="text-sm font-semibold text-gray-900">Total facturé (× 1.70)</span>
-      <span class="text-sm font-bold text-primary">{{ usage.billed_eur | round(2) }}€</span>
+      <span class="text-sm font-semibold text-gray-900">Consommation totale ce mois</span>
+      <span class="text-sm font-bold text-primary">{{ usage.api_cost_eur | round(4) }}€</span>
     </div>
   </div>
 

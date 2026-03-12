@@ -136,9 +136,9 @@ Le client a déjà dit bonjour. Tu enchaînes directement :
 4. Interprète les jours relatifs : "mardi" = le prochain mardi qui arrive, "demain" = demain, etc.
 5. Quand tu as le jour → demande à quelle HEURE (ex: "À quelle heure vous conviendrait-il ?")
 6. Quand tu as l'heure → vérifie avec check_available_slots.
-7. Si disponible → dis : "Parfait, je vous confirme un RDV [service] le [jour] à [heure] au nom de [prénom nom]. C'est bien ça ?"
-8. Si le client confirme → crée avec create_reservation (inclus client_name) puis appelle end_call.
-9. Si non disponible → propose les 2-3 créneaux libres les plus proches.{employee_instruction}
+7. Si le créneau exact est disponible → dis : "Parfait, je vous confirme un RDV [service] le [jour] à [heure] au nom de [prénom nom]. C'est bien ça ?"
+8. Si le créneau n'est PAS disponible → propose exactement 2 créneaux : le plus proche AVANT et le plus proche APRÈS l'heure demandée. Ex: "Ce créneau n'est pas disponible. Je peux vous proposer 13h30 ou 14h30. Laquelle vous convient ?"
+9. Si le client confirme → crée avec create_reservation (inclus client_name) puis appelle end_call.{employee_instruction}
 
 RÈGLES IMPÉRATIVES:
 - Pose UNE SEULE question à la fois — c'est un appel vocal, sois bref.
@@ -393,7 +393,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
                 business_id=business_id,
             )
 
-            send_confirmation_sms(phone, client_name or "", service, appointment_dt, reservation.id)
+            send_confirmation_sms(phone, client_name or "", service, appointment_dt, reservation.id, business_id)
 
             # Store for email summary
             session.reservation_info = {
@@ -425,7 +425,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             if google_event_id:
                 delete_calendar_event(google_event_id)
 
-            send_cancellation_sms(phone, service, appointment_dt)
+            send_cancellation_sms(phone, service, appointment_dt, business_id)
 
             return json.dumps({
                 "success": True,
@@ -453,7 +453,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
             if res.google_event_id:
                 update_calendar_event(res.google_event_id, new_dt, duration)
 
-            send_confirmation_sms(phone, "", res.service_name, new_dt, reservation_id)
+            send_confirmation_sms(phone, "", res.service_name, new_dt, reservation_id, business_id)
 
             session.reservation_info = {
                 "service": res.service_name,
@@ -511,7 +511,7 @@ def _execute_tool(tool_name: str, args: dict, session: ConversationSession) -> s
                 party_size=party_size,
             )
 
-            send_confirmation_sms(phone, client_name, f"Table {table_name} ({party_size} pers.)", appointment_dt, reservation.id)
+            send_confirmation_sms(phone, client_name, f"Table {table_name} ({party_size} pers.)", appointment_dt, reservation.id, business_id)
             session.reservation_info = {
                 "service": f"Table {table_name} pour {party_size} personnes",
                 "datetime": appointment_dt.strftime("%d/%m/%Y à %H:%M"),
