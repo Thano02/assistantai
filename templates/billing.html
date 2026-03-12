@@ -17,7 +17,7 @@
 {% if not business.subscription_paid %}
 <div class="bg-amber-50 border border-amber-300 text-amber-800 px-5 py-4 rounded-xl mb-6">
   <p class="font-semibold mb-1">⚠️ Activez votre accès pour utiliser le service</p>
-  <p class="text-sm mt-1">Commencez avec <strong>7 jours d'accès complet à 30€</strong>, puis <strong>300€/mois</strong> automatiquement. Résiliable à tout moment depuis votre espace.</p>
+  <p class="text-sm mt-1">Commencez avec <strong>7 jours d'accès complet à 30€</strong>, puis <strong>329€/mois</strong> automatiquement. Résiliable à tout moment depuis votre espace.</p>
 </div>
 {% endif %}
 
@@ -38,12 +38,12 @@
             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
-            puis <span class="font-semibold text-gray-700">300€/mois</span> — reconduit automatiquement
+            puis <span class="font-semibold text-gray-700">329€/mois</span> — reconduit automatiquement
           </div>
         </div>
         {% else %}
         <div class="flex items-center gap-3 mt-2">
-          <span class="text-3xl font-extrabold text-gray-900">300€</span>
+          <span class="text-3xl font-extrabold text-gray-900">329€</span>
           <span class="text-gray-500 font-medium">/mois</span>
         </div>
         {% endif %}
@@ -51,7 +51,7 @@
         <p class="text-xs text-amber-600 font-medium mt-2">
           ⏳ Période d'essai — expire le {{ business.trial_ends_at.strftime('%d/%m/%Y') }}
         </p>
-        <p class="text-xs text-gray-400">Puis 300€/mois prélevé automatiquement</p>
+        <p class="text-xs text-gray-400">Puis 329€/mois prélevé automatiquement</p>
         {% elif business.subscription_paid and business.subscription_current_period_end %}
         <p class="text-xs text-gray-400 mt-1">Prochain prélèvement : {{ business.subscription_current_period_end.strftime('%d/%m/%Y') }}</p>
         {% endif %}
@@ -63,17 +63,23 @@
           <span class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-3 py-1.5 rounded-lg font-semibold text-center">Essai en cours</span>
           {% endif %}
           {% if portal_available %}
-          <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center">
+          <a href="/stripe/portal" class="text-sm bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-center font-semibold">
             Gérer l'abonnement
+          </a>
+          <a href="/stripe/portal" class="text-xs text-red-500 hover:text-red-700 text-center transition-colors">
+            Résilier l'abonnement
           </a>
           {% else %}
           <span class="text-sm text-green-600 font-semibold px-4 py-2">✓ Actif</span>
+          <a href="mailto:contact@assistantai.fr" class="text-xs text-red-500 hover:text-red-700 text-center">
+            Demander la résiliation
+          </a>
           {% endif %}
         {% else %}
           <a href="/stripe/subscribe/starter" class="text-sm bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors text-center">
             Commencer — 30€ / 7 jours →
           </a>
-          <p class="text-xs text-gray-400 text-center">puis 300€/mois</p>
+          <p class="text-xs text-gray-400 text-center">puis 329€/mois</p>
         {% endif %}
       </div>
     </div>
@@ -100,16 +106,12 @@
     </div>
     <div class="border-t border-gray-100 mt-4 pt-4 space-y-2">
       <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Abonnement {{ business.plan|capitalize }}</span>
+        <span class="text-gray-600">Abonnement Pro</span>
         <span class="font-medium">{{ plan_price }}€</span>
-      </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Conso API ({{ usage.api_cost_eur | round(4) }}€ × 1.70)</span>
-        <span class="font-medium">{{ usage.billed_eur | round(2) }}€</span>
       </div>
       <div class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
         <span>Total estimé ce mois</span>
-        <span class="text-primary">{{ estimated_total | round(2) }}€</span>
+        <span class="text-primary">{{ plan_price }}€</span>
       </div>
     </div>
   </div>
