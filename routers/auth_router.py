@@ -53,10 +53,12 @@ def register_submit(
 
         pw_hash = hash_password(password)
         verification_token = uuid.uuid4().hex
+        token_expiry = datetime.utcnow() + timedelta(hours=2)
         business = create_business(db, business_name, email, pw_hash, plan)
         update_business(
             db, business.id,
             email_verification_token=verification_token,
+            email_verification_token_expiry=token_expiry,
             email_verified=False,
         )
 
@@ -105,14 +107,27 @@ def verify_email(request: Request, token: str):
                 {"request": request, "error": "Lien invalide ou déjà utilisé."},
             )
 
+        if business.email_verification_token_expiry and datetime.utcnow() > business.email_verification_token_expiry:
+            return templates.TemplateResponse(
+                "check_email.html",
+                {"request": request, "error": "Ce lien a expiré. Reconnectez-vous pour en recevoir un nouveau."},
+            )
+
         update_business(
             db, business.id,
             email_verified=True,
             email_verification_token=None,
+            email_verification_token_expiry=None,
         )
         send_welcome_email(business.owner_email, business.name)
 
-        return RedirectResponse(url="/auth/login?verified=1", status_code=303)
+        jwt_token = create_access_token(business.id, business.owner_email)
+        response = RedirectResponse(url="/subscribe", status_code=303)
+        response.set_cookie(
+            "access_token", jwt_token,
+            httponly=True, max_age=60 * 60 * 24 * 30, samesite="lax",
+        )
+        return response
     finally:
         db.close()
 

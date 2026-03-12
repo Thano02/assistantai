@@ -60,6 +60,7 @@ class Business(Base):
     # Email verification
     email_verified = Column(Boolean, default=False)
     email_verification_token = Column(String(100), nullable=True)
+    email_verification_token_expiry = Column(DateTime, nullable=True)
 
     # Paiement (géré via Stripe ou manuellement par le superadmin)
     subscription_paid = Column(Boolean, default=False)
