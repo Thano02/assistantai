@@ -17,7 +17,7 @@
 {% if not business.subscription_paid %}
 <div class="bg-amber-50 border border-amber-300 text-amber-800 px-5 py-4 rounded-xl mb-6">
   <p class="font-semibold mb-1">⚠️ Activez votre accès pour utiliser le service</p>
-  <p class="text-sm mt-1">Commencez avec <strong>7 jours d'accès complet à 20€</strong>, puis <strong>199€/mois</strong> automatiquement. Résiliable à tout moment.</p>
+  <p class="text-sm mt-1">Commencez avec <strong>7 jours d'accès complet à 19,99€</strong>, puis <strong>199€/mois</strong> automatiquement. Résiliable à tout moment.</p>
 </div>
 {% endif %}
 
@@ -31,7 +31,7 @@
         {% if not business.subscription_paid %}
         <div class="mt-3 space-y-2">
           <div class="flex items-center gap-3">
-            <span class="text-2xl font-extrabold text-gray-900">20€</span>
+            <span class="text-2xl font-extrabold text-gray-900">19,99€</span>
             <span class="text-sm text-amber-600 font-medium bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">7 premiers jours</span>
           </div>
           <div class="flex items-center gap-2 text-sm text-gray-500">
@@ -77,7 +77,7 @@
           {% endif %}
         {% else %}
           <a href="/stripe/subscribe/starter" class="text-sm bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors text-center">
-            Commencer — 20€ / 7 jours →
+            Commencer — 19,99€ / 7 jours →
           </a>
           <p class="text-xs text-gray-400 text-center">puis 199€/mois</p>
         {% endif %}
