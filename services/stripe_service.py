@@ -32,7 +32,7 @@ def create_stripe_customer(email: str, business_name: str) -> Optional[str]:
 
 
 def _resolve_price_id() -> Optional[str]:
-    """Retourne le price_id Stripe configuré (plan unique 139€/mois)."""
+    """Retourne le price_id Stripe configuré (plan unique 199€/mois)."""
     return settings.stripe_price_id or None
 
 
@@ -55,7 +55,7 @@ def create_checkout_session(
         params = dict(
             mode="subscription",
             line_items=[
-                # Abonnement 139€/mois (démarre après le trial)
+                # Abonnement 199€/mois (démarre après le trial)
                 {"price": price_id, "quantity": 1},
                 # Frais d'activation 20€ facturé immédiatement
                 {
