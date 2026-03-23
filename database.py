@@ -62,6 +62,10 @@ class Business(Base):
     email_verification_token = Column(String(100), nullable=True)
     email_verification_token_expiry = Column(DateTime, nullable=True)
 
+    # Password reset
+    password_reset_token = Column(String(100), nullable=True)
+    password_reset_token_expiry = Column(DateTime, nullable=True)
+
     # Paiement (géré via Stripe ou manuellement par le superadmin)
     subscription_paid = Column(Boolean, default=False)
     subscription_current_period_end = Column(DateTime, nullable=True)

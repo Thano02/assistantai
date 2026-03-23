@@ -77,6 +77,31 @@ def send_welcome_email(email: str, business_name: str) -> bool:
     return _send(email, f"Bienvenue sur AssistantAI, {business_name} !", html)
 
 
+# ── Password reset ────────────────────────────────────────────────────────────
+
+def send_password_reset_email(email: str, token: str) -> bool:
+    base = settings.base_url.rstrip("/")
+    reset_url = f"{base}/auth/reset-password/{token}"
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px">
+      <h2 style="color:#1a1a2e;margin-bottom:8px">Réinitialisation du mot de passe</h2>
+      <p style="color:#6b7280;margin-bottom:24px">
+        Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous.
+        Ce lien est valable <strong>2 heures</strong>.
+      </p>
+      <a href="{reset_url}"
+         style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;
+                padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px">
+        Réinitialiser mon mot de passe
+      </a>
+      <p style="color:#9ca3af;font-size:12px;margin-top:32px">
+        Si vous n'avez pas fait cette demande, ignorez cet e-mail. Votre mot de passe ne sera pas modifié.
+      </p>
+    </div>
+    """
+    return _send(email, "Réinitialisation de votre mot de passe — AssistantAI", html)
+
+
 # ── Call summary ──────────────────────────────────────────────────────────────
 
 def send_contact_request_email(

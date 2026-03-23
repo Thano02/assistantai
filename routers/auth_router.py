@@ -20,7 +20,7 @@ from database import (
 from services.auth_service import hash_password, verify_password, create_access_token, get_current_business_id
 from services.stripe_service import create_stripe_customer
 from services.outlook_service import get_auth_url as outlook_auth_url, exchange_code_for_tokens
-from services.email_service import send_verification_email, send_welcome_email
+from services.email_service import send_verification_email, send_welcome_email, send_password_reset_email
 from utils import get_logger
 
 logger = get_logger(__name__)
@@ -212,6 +212,79 @@ def logout():
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("access_token")
     return response
+
+
+# ── Mot de passe oublié ───────────────────────────────────────────────────────
+
+@router.get("/forgot-password")
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+
+@router.post("/forgot-password")
+def forgot_password_submit(request: Request, email: str = Form(...)):
+    db = SessionLocal()
+    try:
+        business = get_business_by_email(db, email)
+        if business:
+            token = uuid.uuid4().hex
+            expiry = datetime.utcnow() + timedelta(hours=2)
+            update_business(db, business.id, password_reset_token=token, password_reset_token_expiry=expiry)
+            send_password_reset_email(email, token)
+    finally:
+        db.close()
+    # Toujours afficher le même message pour ne pas révéler si l'email existe
+    return templates.TemplateResponse("forgot_password.html", {
+        "request": request,
+        "sent": True,
+    })
+
+
+@router.get("/reset-password/{token}")
+def reset_password_page(request: Request, token: str):
+    db = SessionLocal()
+    try:
+        from database import Business
+        business = db.query(Business).filter(
+            Business.password_reset_token == token,
+        ).first()
+        if not business or (business.password_reset_token_expiry and datetime.utcnow() > business.password_reset_token_expiry):
+            return templates.TemplateResponse("reset_password.html", {
+                "request": request, "error": "Ce lien est invalide ou a expiré.",
+            })
+        return templates.TemplateResponse("reset_password.html", {"request": request, "token": token})
+    finally:
+        db.close()
+
+
+@router.post("/reset-password/{token}")
+def reset_password_submit(
+    request: Request,
+    token: str,
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+):
+    if password != confirm_password:
+        return templates.TemplateResponse("reset_password.html", {
+            "request": request, "token": token, "error": "Les mots de passe ne correspondent pas.",
+        })
+    if len(password) < 8:
+        return templates.TemplateResponse("reset_password.html", {
+            "request": request, "token": token, "error": "Le mot de passe doit contenir au moins 8 caractères.",
+        })
+    db = SessionLocal()
+    try:
+        from database import Business
+        from services.auth_service import hash_password
+        business = db.query(Business).filter(Business.password_reset_token == token).first()
+        if not business or (business.password_reset_token_expiry and datetime.utcnow() > business.password_reset_token_expiry):
+            return templates.TemplateResponse("reset_password.html", {
+                "request": request, "error": "Ce lien est invalide ou a expiré.",
+            })
+        update_business(db, business.id, password_hash=hash_password(password), password_reset_token=None, password_reset_token_expiry=None)
+    finally:
+        db.close()
+    return RedirectResponse(url="/auth/login?reset=1", status_code=303)
 
 
 # ── Google Calendar OAuth ─────────────────────────────────────────────────────

@@ -14,6 +14,11 @@
         ✅ Email confirmé ! Vous pouvez maintenant vous connecter.
       </div>
       {% endif %}
+      {% if request.query_params.get('reset') %}
+      <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+        ✅ Mot de passe modifié ! Vous pouvez maintenant vous connecter.
+      </div>
+      {% endif %}
       {% if error %}
       <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
         {{ error }}
@@ -37,10 +42,15 @@
           Se connecter
         </button>
       </form>
-      <p class="text-center text-sm text-gray-500 mt-6">
-        Pas encore de compte ?
-        <a href="/auth/register" class="text-primary font-medium hover:underline">S'inscrire</a>
-      </p>
+      <div class="flex justify-between items-center mt-6">
+        <p class="text-sm text-gray-500">
+          Pas encore de compte ?
+          <a href="/auth/register" class="text-primary font-medium hover:underline">S'inscrire</a>
+        </p>
+        <a href="/auth/forgot-password" class="text-sm text-gray-400 hover:text-primary transition-colors">
+          Mot de passe oublié ?
+        </a>
+      </div>
     </div>
   </div>
 </div>

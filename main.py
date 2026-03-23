@@ -19,6 +19,12 @@ def _run_migrations():
         conn.execute(__import__('sqlalchemy').text(
             "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS email_verification_token_expiry TIMESTAMP;"
         ))
+        conn.execute(__import__('sqlalchemy').text(
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS password_reset_token VARCHAR(100);"
+        ))
+        conn.execute(__import__('sqlalchemy').text(
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS password_reset_token_expiry TIMESTAMP;"
+        ))
         conn.commit()
 
 
