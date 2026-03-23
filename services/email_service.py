@@ -52,7 +52,7 @@ def send_verification_email(email: str, token: str, business_name: str) -> bool:
         Confirmer mon adresse e-mail
       </a>
       <p style="color:#9ca3af;font-size:12px;margin-top:32px">
-        Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez cet e-mail.
+        Ce lien expire dans 2 heures. Si vous n'avez pas créé de compte, ignorez cet e-mail.
       </p>
     </div>
     """

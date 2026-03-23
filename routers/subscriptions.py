@@ -24,6 +24,11 @@ def _get_business_by_customer(db, customer_id: str):
     return db.query(Business).filter(Business.stripe_customer_id == customer_id).first()
 
 
+@router.get("/subscribe")
+def subscribe_default(request: Request, business_id: int = Depends(get_current_business_id)):
+    return subscribe("starter", request, business_id)
+
+
 @router.get("/subscribe/{plan}")
 def subscribe(
     plan: str,

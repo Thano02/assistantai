@@ -40,7 +40,7 @@ class Settings:
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     stripe_price_id: str = os.getenv("STRIPE_PRICE_ID", "")
     stripe_trial_days: int = int(os.getenv("STRIPE_TRIAL_DAYS", "7"))
-    stripe_trial_amount_cents: int = int(os.getenv("STRIPE_TRIAL_AMOUNT_CENTS", "3000"))  # 30€
+    stripe_trial_amount_cents: int = int(os.getenv("STRIPE_TRIAL_AMOUNT_CENTS", "1999"))  # 19,99€
 
     # ── Microsoft Azure (Outlook) ────────────────────────────────────────────
     azure_client_id: str = os.getenv("AZURE_CLIENT_ID", "")
@@ -57,7 +57,7 @@ class Settings:
     admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
 
     # ── Tarifs des plans ─────────────────────────────────────────────────────
-    plan_prices: dict = {"starter": 300.0, "pro": 300.0, "enterprise": 300.0}
+    plan_prices: dict = {"starter": 199.0, "pro": 199.0, "enterprise": 199.0}
 
     # ── Coûts API approximatifs (en EUR) ─────────────────────────────────────
     cost_gpt4o_input_per_1k: float = 0.0046     # ~$0.005 / 1k tokens
