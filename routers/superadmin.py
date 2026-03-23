@@ -145,6 +145,21 @@ def superadmin_verify_email(bid: int, admin_id: int = Depends(require_superadmin
     return RedirectResponse(url=f"/superadmin/business/{bid}", status_code=303)
 
 
+@router.post("/business/{bid}/send-phone")
+def superadmin_send_phone(bid: int, admin_id: int = Depends(require_superadmin)):
+    from services.email_service import send_phone_number_to_client
+    db = SessionLocal()
+    try:
+        business = get_business_by_id(db, bid)
+        if not business or not business.twilio_phone_number:
+            return RedirectResponse(url=f"/superadmin/business/{bid}?error=no_phone", status_code=303)
+        send_phone_number_to_client(business.owner_email, business.name, business.twilio_phone_number)
+        logger.info("Superadmin sent phone number to business %d", bid)
+    finally:
+        db.close()
+    return RedirectResponse(url=f"/superadmin/business/{bid}?success=phone_sent", status_code=303)
+
+
 @router.post("/business/{bid}/plan")
 def superadmin_change_plan(
     bid: int,

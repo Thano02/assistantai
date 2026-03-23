@@ -8,6 +8,7 @@ import stripe
 
 from config import settings
 from database import SessionLocal, get_business_by_id, update_business, Business
+from services.email_service import send_new_payment_notification
 from services.stripe_service import (
     create_checkout_session,
     get_customer_portal_url,
@@ -156,6 +157,9 @@ async def stripe_webhook(request: Request):
                     trial_ends_at=trial_ends_at,
                 )
                 logger.info("[Stripe] business_id=%d activated plan=%s trial=%s", business_id, plan, trial_ends_at)
+                business = db.query(Business).filter(Business.id == business_id).first()
+                if business:
+                    send_new_payment_notification(business.name, business.owner_email, business.id)
 
         elif event_type == "invoice.payment_succeeded":
             invoice = event["data"]["object"]

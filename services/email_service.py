@@ -77,6 +77,68 @@ def send_welcome_email(email: str, business_name: str) -> bool:
     return _send(email, f"Bienvenue sur AssistantAI, {business_name} !", html)
 
 
+# ── Notification nouveau paiement (owner) ─────────────────────────────────────
+
+def send_new_payment_notification(business_name: str, business_email: str, business_id: int) -> bool:
+    admin_url = f"{settings.base_url.rstrip('/')}/superadmin/business/{business_id}"
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px">
+      <h2 style="color:#1a1a2e;margin-bottom:8px">💰 Nouveau client payant !</h2>
+      <p style="color:#6b7280;margin-bottom:24px">
+        Un client vient de régler son essai et est maintenant actif sur AssistantAI.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px">
+        <tr><td style="padding:8px 0;font-weight:600;width:140px">Commerce :</td><td><strong>{business_name}</strong></td></tr>
+        <tr><td style="padding:8px 0;font-weight:600">Email :</td><td><a href="mailto:{business_email}" style="color:#2563eb">{business_email}</a></td></tr>
+      </table>
+      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:16px;margin-bottom:24px">
+        <p style="margin:0;font-weight:600;color:#92400e">⚠️ Action requise</p>
+        <p style="margin:6px 0 0;color:#92400e;font-size:14px">
+          Achetez et configurez un numéro Twilio pour ce client, puis envoyez-le lui depuis le superadmin.
+        </p>
+      </div>
+      <a href="{admin_url}"
+         style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;
+                padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px">
+        Voir le client dans le superadmin →
+      </a>
+    </div>
+    """
+    return _send("ethan36@hotmail.fr", f"💰 Nouveau client : {business_name}", html)
+
+
+def send_phone_number_to_client(business_email: str, business_name: str, phone_number: str) -> bool:
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px">
+      <h2 style="color:#1a1a2e;margin-bottom:8px">Votre ligne téléphonique est prête ! 🎉</h2>
+      <p style="color:#6b7280;margin-bottom:24px">
+        Bonjour <strong>{business_name}</strong>,<br><br>
+        Votre assistant vocal est maintenant opérationnel. Voici votre numéro de téléphone dédié :
+      </p>
+      <div style="background:#eff6ff;border:2px solid #2563eb;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px">
+        <p style="margin:0;font-size:28px;font-weight:800;color:#1d4ed8;letter-spacing:2px">{phone_number}</p>
+        <p style="margin:8px 0 0;color:#6b7280;font-size:13px">Votre numéro AssistantAI</p>
+      </div>
+      <p style="color:#374151;font-size:14px;margin-bottom:16px">
+        <strong>Comment tester :</strong><br>
+        Appelez ce numéro depuis votre téléphone — votre assistant vocal répondra et pourra prendre des rendez-vous pour vous.
+      </p>
+      <p style="color:#374151;font-size:14px;margin-bottom:24px">
+        Pensez à configurer vos <strong>horaires</strong> et vos <strong>services</strong> depuis votre espace client pour que le robot soit parfaitement paramétré.
+      </p>
+      <a href="{settings.base_url.rstrip('/')}/dashboard"
+         style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;
+                padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px">
+        Accéder à mon espace client →
+      </a>
+      <p style="color:#9ca3af;font-size:12px;margin-top:32px">
+        Une question ? Répondez à cet email ou contactez-nous à contact@assistantai.fr
+      </p>
+    </div>
+    """
+    return _send(business_email, f"Votre numéro AssistantAI est prêt — {phone_number}", html)
+
+
 # ── Password reset ────────────────────────────────────────────────────────────
 
 def send_password_reset_email(email: str, token: str) -> bool:

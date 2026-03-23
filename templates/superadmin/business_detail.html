@@ -8,6 +8,16 @@
   ✅ Plan mis à jour avec succès.
 </div>
 {% endif %}
+{% if request.query_params.get('success') == 'phone_sent' %}
+<div class="bg-green-900 border border-green-700 text-green-300 px-4 py-3 rounded-lg mb-6 text-sm">
+  ✅ Numéro de téléphone envoyé au client par email.
+</div>
+{% endif %}
+{% if request.query_params.get('error') == 'no_phone' %}
+<div class="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm">
+  ❌ Aucun numéro Twilio configuré pour ce client. Configurez-le d'abord dans les paramètres.
+</div>
+{% endif %}
 
 <div class="grid grid-cols-2 gap-6">
 
@@ -107,13 +117,31 @@
     <h2 class="font-semibold mb-4">Changer le plan</h2>
     <form method="post" action="/superadmin/business/{{ business.id }}/plan" class="flex gap-3 items-end">
       <select name="plan" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
-        <option value="starter" {{ 'selected' if business.plan == 'starter' }}>Starter — essai 30€</option>
-        <option value="pro" {{ 'selected' if business.plan in ('pro', 'enterprise') }}>Pro Entreprise — 300€/mois</option>
+        <option value="starter" {{ 'selected' if business.plan == 'starter' }}>Starter — essai 19,99€</option>
+        <option value="pro" {{ 'selected' if business.plan in ('pro', 'enterprise') }}>Pro — 199€/mois</option>
       </select>
       <button class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
         Appliquer
       </button>
     </form>
+  </div>
+
+  <!-- Envoyer le numéro au client -->
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <h2 class="font-semibold mb-2">Envoyer le numéro au client</h2>
+    <p class="text-sm text-gray-400 mb-4">
+      Numéro configuré :
+      <span class="text-white font-mono font-semibold">{{ business.twilio_phone_number or '—' }}</span>
+    </p>
+    {% if business.twilio_phone_number %}
+    <form method="post" action="/superadmin/business/{{ business.id }}/send-phone">
+      <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        📱 Envoyer le numéro par email au client
+      </button>
+    </form>
+    {% else %}
+    <p class="text-sm text-orange-400">Configurez d'abord le numéro Twilio dans les paramètres client.</p>
+    {% endif %}
   </div>
 
 </div>
