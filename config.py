@@ -58,7 +58,7 @@ class Settings:
     admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
 
     # ── Tarifs des plans ─────────────────────────────────────────────────────
-    plan_prices: dict = {"starter": 199.0, "pro": 199.0, "enterprise": 199.0}
+    plan_prices: dict = {"starter": 249.0, "pro": 249.0, "enterprise": 249.0}
 
     # ── Coûts API approximatifs (en EUR) ─────────────────────────────────────
     cost_gpt4o_input_per_1k: float = 0.0046     # ~$0.005 / 1k tokens

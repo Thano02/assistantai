@@ -85,9 +85,9 @@ def superadmin_business_detail(request: Request, bid: int, admin_id: int = Depen
             func.extract("year", UsageLog.created_at) == now.year,
         ).scalar() or 0
 
-        included_calls = 500
+        included_calls = 300
         overage_calls = max(0, monthly_calls - included_calls)
-        overage_eur = round(overage_calls * 0.25, 2)
+        overage_eur = round(overage_calls * 0.30, 2)
 
         return templates.TemplateResponse(
             "superadmin/business_detail.html",
