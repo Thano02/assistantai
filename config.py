@@ -17,6 +17,7 @@ class Settings:
     # ── ElevenLabs ──────────────────────────────────────────────────────────
     elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "")
     elevenlabs_voice_id: str = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+    elevenlabs_agent_id: str = os.getenv("ELEVENLABS_AGENT_ID", "agent_8201kpdwbq0jetyvqbtyazk9p9s8")
 
     # ── Serveur ──────────────────────────────────────────────────────────────
     base_url: str = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
